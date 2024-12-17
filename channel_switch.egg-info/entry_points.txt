@@ -1,0 +1,2 @@
+[console_scripts]
+channel-switch = src.rmacs_manager:main

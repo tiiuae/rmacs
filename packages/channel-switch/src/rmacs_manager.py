@@ -9,8 +9,11 @@ import time
 import re
 import os
 import asyncio
-from logging_config import logger
+parent_directory = os.path.abspath(os.path.dirname(__file__))
+if parent_directory not in sys.path:
+   sys.path.append(parent_directory)
 from config import create_default_config, load_config
+from logging_config import logger
 from rmacs_util import get_interface_operstate, get_channel_bw, is_process_running, kill_process_by_pid, run_command
 
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
