@@ -1,14 +1,9 @@
-import json
-import subprocess
 import threading
 
 #import netifaces
 import signal
 import sys
-import time
-import re
 import os
-import asyncio
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
    sys.path.append(parent_directory)
@@ -115,10 +110,9 @@ def check_radio_interface(config, primary_radio):
                 logger.error(f'Primary radio:[{interface}] is not up')
             logger.warning(f'Radio interface:[{interface}] is not up')
 
-async def main(): 
+def main(): 
     # Start rmacs-related scripts  
     logger.info('RMACS Manager thread is started....')
-    print('**RMACS Manager thread is started....')
     # Create the configuration
     create_rmacs_config()
     config = load_config(config_file_path)
@@ -128,6 +122,4 @@ async def main():
     start_rmacs_scripts(config)
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    loop.close()
+    main()
