@@ -17,6 +17,9 @@ dependencies = { file = ["requirements.txt"]}
 [tool.setuptools.packages.find]
 where = ["."]
 
+[tool.setuptools]
+include-package-data = true
+
 
 [project.scripts]
 channel-switch = "src.rmacs_manager:main"
