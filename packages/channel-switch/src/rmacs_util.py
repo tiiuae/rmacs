@@ -2,8 +2,6 @@ import os
 #import netifaces as ni
 import subprocess
 import re
-import numpy as np
-import pandas as pd
 from logging_config import logger
 
 # Channel to frequency and frequency to channel mapping
@@ -132,7 +130,7 @@ def get_mesh_freq(interface) -> int:
 
     :return: An integer representing the mesh frequency.
     """
-    mesh_freq: int = np.nan
+    mesh_freq: int = None
 
     try:
         iw_output = subprocess.check_output(['iw', 'dev'], encoding='utf-8')

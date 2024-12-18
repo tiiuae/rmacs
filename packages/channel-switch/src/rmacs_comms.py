@@ -1,9 +1,6 @@
 import socket
 import struct
-import threading
 import logging
-import json
-import time
 from netstring import encode, decode
 import msgpack
 

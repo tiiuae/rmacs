@@ -12,7 +12,6 @@ import json
 import os
 
 import msgpack
-import numpy as np
 import pandas as pd
 from netstring import encode, decode
 
