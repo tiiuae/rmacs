@@ -1,9 +1,12 @@
 README.md
 pyproject.toml
+requirements.txt
+channel_switch.egg-info/.dependency_links.txt.swp
 channel_switch.egg-info/PKG-INFO
 channel_switch.egg-info/SOURCES.txt
 channel_switch.egg-info/dependency_links.txt
 channel_switch.egg-info/entry_points.txt
+channel_switch.egg-info/requires.txt
 channel_switch.egg-info/top_level.txt
 packages/channel-switch/setup.py
 packages/channel-switch/src/cca_scanner.py

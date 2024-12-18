@@ -5,6 +5,9 @@ Summary: Resilient Mesh Automatic Channel Selection
 Project-URL: Homepage, https://github.com/tiiuae/rmacs
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
+Requires-Dist: netifaces==0.11.0
+Requires-Dist: numpy==1.24.0
+Requires-Dist: msgpack==1.1.0
 
 RMACS(Resilient Mesh Automatic Channel Selection)v1.0 empowers the mesh network to autonomously switch to optimal channel by leveraging Clear Channel Assessment (CCA) and spectral scan data across specified frequency bands (2.4 GHz, and 5 GHz), thereby bolstering performance and resilience for sustained and reliable communication capabilities.
 
