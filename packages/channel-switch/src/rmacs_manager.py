@@ -50,18 +50,24 @@ def start_rmacs_scripts(config) -> None:
     """
     Start rmacs-related scripts based on configuration.
     """
- 
+    
     try:
         if config['RMACS_Config']['orchestra_node']:
             server_thread = threading.Thread(target=start_server, args=(config,))
+            client_thread = threading.Thread(target=start_client, args=(config,))
             server_thread.start()
-        client_thread = threading.Thread(target=start_client, args=(config,))
-        client_thread.start()
-        server_thread.join()
-        client_thread.join()
+            client_thread.start()
+            server_thread.join()
+            client_thread.join()
+        else:
+            client_thread = threading.Thread(target=start_client, args=(config,))
+            client_thread.start()
+            client_thread.join()
+        
     except Exception as e:
         logger.info(f"Error starting rmacs server/client scripts: {e}")
         raise Exception(e)
+ 
 
 
 # Function to handle the SIGTERM signal
