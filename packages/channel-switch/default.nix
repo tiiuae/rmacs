@@ -24,6 +24,7 @@
       pkgs.python3
       pkgs.wpa_supplicant
       pkgs.python3Packages.msgpack
+      python.pkgs.msgpack 
       (pkgs.python3Packages.buildPythonApplication {
         pname = "channel-switch";
         version = "1.0.0";
@@ -36,6 +37,7 @@
         propagatedBuildInputs = [
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
+          python.pkgs.msgpack 
         ];
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
