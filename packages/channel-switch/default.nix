@@ -1,6 +1,36 @@
 { config, pkgs, lib, ... }:
   let
     pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
+  in
+{
+  imports = [
+    dream2nix.modules.dream2nix.pip
+  ];
+
+  deps =
+    { nixpkgs, ... }:
+    {
+      python = nixpkgs.python3;
+    };
+
+  inherit (pyproject.project) name version;
+  buildPythonPackage = {
+    pyproject = lib.mkForce true;
+    build-system = [ config.deps.python.pkgs.setuptools ];
+    pythonImportsCheck = [
+      "mdmagent"
+    ];
+  };
+
+  pip = {
+    editables.${pyproject.project.name} = "./mdmagent";
+    requirementsList = pyproject.project.dependencies or [ ];
+    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
+    flattenDependencies = true;
+    pipFlags = [ "--no-deps" ];
+    nativeBuildInputs = [ config.deps.gcc ];
+  };
+}
   with lib; {
   config = {
     # Systemd service definition
