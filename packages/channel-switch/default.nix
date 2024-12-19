@@ -1,35 +1,5 @@
-{ config, pkgs, lib, dream2nix,... }:
-
-let
-  pyproject = lib.importTOML (./pyproject.toml);
-in
-
-{
+{ config, pkgs, lib, ... }: with lib; {
   config = {
-    # Import the dream2nix module
-    imports = [
-      dream2nix.modules.dream2nix.pip
-    ];
-
-    # Build Python package configuration
-    buildPythonPackage = {
-      pyproject = lib.mkForce true;
-      build-system = [ pkgs.python3Packages.setuptools ];
-      pythonImportsCheck = [
-        "mdmagent"
-      ];
-    };
-
-    # Pip configuration
-    pip = {
-      editables.${pyproject.project.name} = "./mdmagent";
-      requirementsList = pyproject.project.dependencies or [ ];
-      requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
-      flattenDependencies = true;
-      pipFlags = [ "--no-deps" ];
-      nativeBuildInputs = [ pkgs.gcc ];
-    };
-
     # Systemd service definition
     systemd.services.channel-switch = {
       description = "Resilient Mesh Automatic Channel Selection";
@@ -37,23 +7,23 @@ in
       serviceConfig = {
         Environment = "PATH=/run/current-system/sw/bin:/run/wrappers/bin:/bin:/usr/bin";
         ExecStart = "/run/current-system/sw/bin/channel-switch";
-        Restart = "no"; # "on-failure";
+        Restart = "no"; #"on-failure";
         RestartSec = "5s";
-        User = "root";
       };
+      serviceConfig.User = "root";
       after = [
         "mdmagent.service"
-      ];
+      ];  # Ensure these services start first
       wants = [
         "mdmagent.service"
-      ];
+      ]; 
     };
 
     # Ensure the required packages are installed
     environment.systemPackages = [
       pkgs.python3
       pkgs.wpa_supplicant
-      (pkgs.python3Packages.buildPythonApplication {
+      (pkgs.python4Packages.buildPythonApplication {
         pname = "channel-switch";
         version = "1.0.0";
         src = ./.;
@@ -67,7 +37,6 @@ in
           pkgs.python3Packages.systemd
           pkgs.python3Packages.msgpack
         ];
-
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
           license = licenses.asl20;
