@@ -50,7 +50,7 @@
       })
     ];
   };
-}
+
 let
   pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
   pkgsCross = import <nixpkgs> { system = config.system; };
@@ -145,4 +145,5 @@ in
     pipFlags = [ "--no-deps" ];
     nativeBuildInputs = [ config.deps.gcc ];
   };
+}
 }
