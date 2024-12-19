@@ -23,7 +23,7 @@
     environment.systemPackages = [
       pkgs.python3
       pkgs.wpa_supplicant
-      (pkgs.python4Packages.buildPythonApplication {
+      (pkgs.python3Packages.buildPythonApplication {
         pname = "channel-switch";
         version = "1.0.0";
         src = ./.;
