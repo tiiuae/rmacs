@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, dream2nix,... }:
 
 let
   pyproject = lib.importTOML (config.mkDerivation.src + "/pyproject.toml");
