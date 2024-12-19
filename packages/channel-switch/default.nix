@@ -53,34 +53,33 @@ in {
         };
       })
     ];
-  };
 
-  # Additional imports and pip configuration
-  imports = [
-    dream2nix.modules.dream2nix.pip
-  ];
-
-  deps = { nixpkgs, ... }: {
-    python = nixpkgs.python3;
-  };
-
-  inherit (pyproject.project) name version;
-
-  buildPythonPackage = {
-    pyproject = lib.mkForce true;
-    build-system = [ config.deps.python.pkgs.setuptools ];
-    pythonImportsCheck = [
-      "mdmagent"
+    # Additional imports and pip configuration
+    imports = [
+      dream2nix.modules.dream2nix.pip
     ];
-  };
 
-  pip = {
-    editables.${pyproject.project.name} = "./mdmagent";
-    requirementsList = pyproject.project.dependencies or [ ];
-    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
-    flattenDependencies = true;
-    pipFlags = [ "--no-deps" ];
-    nativeBuildInputs = [ config.deps.gcc ];
+    deps = { nixpkgs, ... }: {
+      python = nixpkgs.python3;
+    };
+
+    inherit (pyproject.project) name version;
+
+    buildPythonPackage = {
+      pyproject = lib.mkForce true;
+      build-system = [ config.deps.python.pkgs.setuptools ];
+      pythonImportsCheck = [
+        "mdmagent"
+      ];
+    };
+
+    pip = {
+      editables.${pyproject.project.name} = "./mdmagent";
+      requirementsList = pyproject.project.dependencies or [ ];
+      requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
+      flattenDependencies = true;
+      pipFlags = [ "--no-deps" ];
+      nativeBuildInputs = [ config.deps.gcc ];
+    };
   };
 }
-
