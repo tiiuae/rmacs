@@ -15,15 +15,7 @@ in
     };
 
 inherit (pyproject.project) name version;
-}
 
-  buildPythonPackage = {
-    pyproject = lib.mkForce true;
-    build-system = [ config.deps.python.pkgs.setuptools ];
-    pythonImportsCheck = [
-      "channel-switch"
-    ];
-  };
 
   pip = {
     editables.${pyproject.project.name} = "./channel-switch";
@@ -33,6 +25,7 @@ inherit (pyproject.project) name version;
     pipFlags = [ "--no-deps" ];
     nativeBuildInputs = [ config.deps.gcc ];
   };
+
 
 with lib; {
   config = {
@@ -72,6 +65,11 @@ with lib; {
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
         ];
+        buildPythonPackage = {
+          pyproject = lib.mkForce true;
+          build-system = [ config.deps.python.pkgs.setuptools ];
+          pythonImportsCheck = ["channel-switch"];
+        };
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
           license = licenses.asl20;
@@ -85,4 +83,5 @@ with lib; {
       })
     ];
   };
+}
 }
