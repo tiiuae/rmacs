@@ -1,4 +1,40 @@
-{ config, pkgs, lib, ... }: with lib; {
+{ config, pkgs, lib, dream2nix, ... }: 
+let
+  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
+  pkgsCross = import <nixpkgs> { system = config.system; };
+
+in
+{
+  imports = [
+    dream2nix.modules.dream2nix.pip
+  ];
+  deps =
+    { nixpkgs, ... }:
+    {
+      python = nixpkgs.python3;
+    };
+
+inherit (pyproject.project) name version;
+};
+
+  buildPythonPackage = {
+    pyproject = lib.mkForce true;
+    build-system = [ config.deps.python.pkgs.setuptools ];
+    pythonImportsCheck = [
+      "channel-switch"
+    ];
+  };
+
+  pip = {
+    editables.${pyproject.project.name} = "./channel-switch";
+    requirementsList = pyproject.project.dependencies or [ ];
+    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
+    flattenDependencies = true;
+    pipFlags = [ "--no-deps" ];
+    nativeBuildInputs = [ config.deps.gcc ];
+  };
+
+with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -35,7 +71,6 @@
         propagatedBuildInputs = [
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
-          pkgs.python3Packages.msgpack
         ];
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
