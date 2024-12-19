@@ -15,7 +15,7 @@ import os
 
 
 from logging_config import logger
-from config import create_default_config, load_config
+from config import load_config
 from traffic_monitor import TrafficMonitor
 from rmacs_util import get_mesh_freq, get_mac_address
 from spectral_scan import Spectral_Scan
@@ -606,16 +606,6 @@ class InterferenceDetection(threading.Thread):
     
 def main():
     logger.info('RMACS client thread is started....')
-    if not os.path.exists(CONFIG_DIR):
-        os.makedirs(CONFIG_DIR, exist_ok=True)
-        logger.info(f"Created configuration directory: {CONFIG_DIR}")
-
-
-    # Create the default configuration file if it doesn't exist
-    create_default_config(config_file_path)
-
-    # Load the configuration
-    #config = load_config(config_file_path)
     client = InterferenceDetection()
     client.start()
     

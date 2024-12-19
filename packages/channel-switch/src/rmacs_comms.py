@@ -6,10 +6,10 @@ import logging
 
 
 #from config_old import Config, MULTICAST_CONFIG
-from config import create_default_config, load_config, create_json_message
+from config import create_default_config, load_config
 
 from logging_config import logger
-#from rmacs_setup import get_mesh_freq, get_ipv6_addr
+from rmacs_util import create_json_message
 
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 
