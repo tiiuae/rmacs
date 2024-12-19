@@ -7,30 +7,6 @@ in {
     dream2nix.modules.dream2nix.pip
   ];
 
-  config = {
-    # Dependencies definition
-    deps = { nixpkgs, ... }: {
-      python = nixpkgs.python3;
-      inherit (nixpkgs)
-        batctl
-        openssl
-        iw
-        kmod
-        ebtables
-        libfaketime
-        gcc
-        swig
-        bash
-        killall
-        coreutils
-        iproute2
-        gnugrep
-        gnused
-        gawk
-        customWpaSupplicant
-        hostapd
-        radvd;
-    };
 
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -76,21 +52,5 @@ in {
 
  
 
-    # Python package build settings
-    buildPythonPackage = {
-      pyproject = lib.mkForce true;
-      build-system = [ config.deps.python.pkgs.setuptools ];
-      pythonImportsCheck = [ "channel-switch" ];
-    };
 
-    # Pip configuration
-    pip = {
-      editables.${pyproject.project.name} = "./channel-switch";
-      requirementsList = pyproject.project.dependencies or [ ];
-      requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
-      flattenDependencies = true;
-      pipFlags = [ "--no-deps" ];
-      nativeBuildInputs = [ config.deps.gcc ];
-    };
-  };
 }
