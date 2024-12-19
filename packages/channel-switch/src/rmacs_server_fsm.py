@@ -1,13 +1,14 @@
-import msgpack
+#import msgpack
 import threading
 import time
 import uuid
+import subprocess
 #from collections import Counter
 from enum import auto, Enum
 from typing import List, Tuple, Dict
-from netstring import encode, decode
-from itertools import islice
-import subprocess
+#from netstring import encode, decode
+#from itertools import islice
+
 
 from config import load_config
 
@@ -158,7 +159,7 @@ class RMACSServer:
         """
         Starts the server and listens for incoming client connections.
         """
-        logger.info("Start the server-------------")
+        logger.info("Start the server............")
         try:     
             self.running = True
                # Establish socket connections for all interfaces
@@ -485,7 +486,9 @@ class RMACSServer:
             try:
                 # Receive incoming messages and decode the netstring encoded data
                 try:
-                    data = decode(socket.recv(1024))
+                    #data = decode(socket.recv(1024))
+                    data = socket.recvfrom(1024)
+                    data = data.decode('utf-8')
                     if not data:
                         logger.info("No data... break")
                 except Exception as e:
@@ -495,27 +498,27 @@ class RMACSServer:
 
                 # Deserialize the MessagePack message
                 try:
-                    unpacked_data = msgpack.unpackb(data, raw=False)
+                    #unpacked_data = msgpack.unpackb(data, raw=False)
                     
-                    message_id: str = unpacked_data.get("message_id")
+                    message_id: str = data.get("message_id")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.info(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
                         else:
                             logger.info(f"{thread_id}: New Msg: Processing Message with ID : {message_id} via interface : {interface}")
-                            device_id: str = unpacked_data.get("device")
+                            device_id: str = data.get("device")
                             # Add the unique ID to the processed set
                             self.processed_ids.add(message_id)
-                            action_id: int = unpacked_data.get("a_id")
+                            action_id: int = data.get("a_id")
                             action_str: str = id_to_action.get(action_id)
-                            #logger.info(f"Received message: {unpacked_data}")
+                            #logger.info(f"Received message: {data}")
     
                             # Bad channel quality index received from client
                             if action_str == "bad_channel_quality_index":
                                 current_received_bcqi_alert = time.time()
-                                device_id = unpacked_data.get("device")
-                                bcqi_reported_freq = unpacked_data.get("freq")
-                                channel_quality_index = unpacked_data.get("qual")
+                                device_id = data.get("device")
+                                bcqi_reported_freq = data.get("freq")
+                                channel_quality_index = data.get("qual")
                                 current_operating_freq = get_mesh_freq(self.nw_interface)
                                 logger.info(f"Received BCQI report for freq :{bcqi_reported_freq} of channel quality index : {channel_quality_index} from device : {device_id} via interface : {interface}")
                                 if current_operating_freq == bcqi_reported_freq:
@@ -526,22 +529,22 @@ class RMACSServer:
                                         logger.info(f" the time diff : {current_received_bcqi_alert - last_received_bcqi_alert}")
                                         last_received_bcqi_alert = current_received_bcqi_alert
                                         logger.info(f"Received BCQI report for freq:{bcqi_reported_freq} from device :{device_id} is for the current operating freq : {current_operating_freq} via interface : {interface}")
-                                        self.bad_channel_message = unpacked_data
+                                        self.bad_channel_message = data
                                     else:
                                         logger.info(f"Received BCQI report for freq : {bcqi_reported_freq} from device : {device_id} at time : {current_received_bcqi_alert} via interface : {interface} is considered as duplicate message, since similar msg from other client prior to this msg is already addressed")
                                 else:
                                     logger.info(f"Received BCQI report for freq:{bcqi_reported_freq} not for current operating freq : {current_operating_freq} via interface : {interface}")
                                     logger.info("Not required to trigger partial frequency hopping")
-                                    unpacked_data = {}
-                                #self.bad_channel_message = unpacked_data
+                                    data = {}
+                                #self.bad_channel_message = data
 
                             # Channel report received from client
                             elif action_str == "channel_quality_report":
-                                self.channel_report_message = unpacked_data
+                                self.channel_report_message = data
                                 logger.info(f"The report is {self.channel_report_message}")
-                except msgpack.UnpackException as e:
-                    logger.error(f"Failed to decode MessagePack: {e}")
-                    continue
+                # except msgpack.UnpackException as e:
+                    # logger.error(f"Failed to decode MessagePack: {e}")
+                    # continue
 
                 except Exception as e:
                     logger.error(f"Error in received message: {e}")

@@ -2,6 +2,7 @@ import os
 #import netifaces as ni
 import subprocess
 import re
+import json
 from logging_config import logger
 
 # Channel to frequency and frequency to channel mapping
@@ -252,3 +253,28 @@ def run_command(command, config, error_message) -> None:
     except Exception as e:
         logger.error(f"{error_message}. Error: {e}")
         raise Exception(error_message) from e
+    
+def create_json_message(msg_type,payload=None, status_code=0):
+    """
+    Create a JSON message based on input parameters without source address.
+    
+    Parameters:
+    msg_type (str): The type of the message (e.g., "COMMAND", "STATUS", "DATA").
+    target (str): The target device or entity (default is "All").
+    payload (dict): The payload of the message (e.g., command details or data) (optional).
+
+    Returns:
+    str: A JSON-formatted message as a string.
+    """
+    # Create the base message structure
+    message = {
+        "msg_type": msg_type
+    }
+
+    # Add optional payload if provided
+    if payload:
+        message["payload"] = payload
+
+    # Convert the message dictionary to a JSON string
+    return json.dumps(message, indent=4)
+
