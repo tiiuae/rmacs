@@ -1,6 +1,12 @@
 import os 
 import time
 import subprocess
+import sys
+
+parent_directory = os.path.abspath(os.path.dirname(__file__))
+if parent_directory not in sys.path:
+   sys.path.append(parent_directory)
+   
 from config import load_config
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 

@@ -1,4 +1,5 @@
 import sys
+import yaml
 import threading
 import time
 import asyncio
@@ -13,6 +14,9 @@ import os
 #from netstring import encode, decode
 #import msgpack
 
+parent_directory = os.path.abspath(os.path.dirname(__file__))
+if parent_directory not in sys.path:
+   sys.path.append(parent_directory)
 
 from logging_config import logger
 from config import load_config

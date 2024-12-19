@@ -3,12 +3,17 @@ import threading
 import time
 import uuid
 import subprocess
+import os
+import sys
 #from collections import Counter
 from enum import auto, Enum
 from typing import List, Tuple, Dict
 #from netstring import encode, decode
 #from itertools import islice
 
+parent_directory = os.path.abspath(os.path.dirname(__file__))
+if parent_directory not in sys.path:
+   sys.path.append(parent_directory)
 
 from config import load_config
 
