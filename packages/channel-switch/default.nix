@@ -1,4 +1,4 @@
-{ config, pkgs, lib, dream2nix, ... }: with lib; {
+{ config, pkgs, lib, ... }: with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -35,12 +35,8 @@
         propagatedBuildInputs = [
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
+          pkgs.python3Packages.msgpack
         ];
-        buildPythonPackage = {
-          pyproject = lib.mkForce true;
-          build-system = [ config.deps.python.pkgs.setuptools ];
-          pythonImportsCheck = ["channel-switch"];
-        };
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
           license = licenses.asl20;
@@ -55,3 +51,4 @@
     ];
   };
 }
+
