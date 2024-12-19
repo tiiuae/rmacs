@@ -26,7 +26,7 @@ inherit (pyproject.project) name version;
     nativeBuildInputs = [ config.deps.gcc ];
   };
 
-
+}
 with lib; {
   config = {
     # Systemd service definition
@@ -83,5 +83,4 @@ with lib; {
       })
     ];
   };
-}
 }
