@@ -1,4 +1,7 @@
 { config, pkgs, lib, ... }:
+let
+  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
+  pkgsCross = import <nixpkgs> { system = config.system; };
  with lib; {
   config = {
     # Systemd service definition
