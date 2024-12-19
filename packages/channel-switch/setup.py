@@ -25,13 +25,14 @@ setup(
     },
     install_requires=[
         "pyyaml",  # For configuration handling
-        "systemd"  # For system logging integration
+        "systemd", # For system logging integration
+        "msgpack"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     include_package_data=True,
 )
