@@ -1,9 +1,4 @@
-{ config, pkgs, lib, dream2nix, ... }: 
-let
-  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
-  pkgsCross = import <nixpkgs> { system = config.system; };
-  
-with lib; {
+{ config, pkgs, lib, dream2nix, ... }: with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
