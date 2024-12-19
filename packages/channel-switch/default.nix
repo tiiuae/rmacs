@@ -1,4 +1,6 @@
 { config, pkgs, lib, ... }:
+  let
+    pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
  with lib; {
   config = {
     # Systemd service definition
