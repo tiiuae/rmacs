@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: channel-switch
-Version: 1.0
+Version: 1.0.0
 Summary: Resilient Mesh Automatic Channel Selection
 Project-URL: Homepage, https://github.com/tiiuae/rmacs
 Requires-Python: >=3.8
