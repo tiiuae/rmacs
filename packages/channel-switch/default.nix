@@ -1,4 +1,9 @@
-{ config, pkgs, lib, dream2nix, ... }: with lib; {
+{ config, pkgs, lib, dream2nix, ... }: 
+let
+  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
+  pkgsCross = import <nixpkgs> { system = config.system; };
+  
+with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -36,34 +41,6 @@
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
         ];
-        let
-  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
-  pkgsCross = import <nixpkgs> { system = config.system; };
-
-in
-{
-  imports = [
-    dream2nix.modules.dream2nix.pip
-  ];
-  deps =
-    { nixpkgs, ... }:
-    {
-      python = nixpkgs.python3;
-    };
-
-inherit (pyproject.project) name version;
-
-
-  pip = {
-    editables.${pyproject.project.name} = "./channel-switch";
-    requirementsList = pyproject.project.dependencies or [ ];
-    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
-    flattenDependencies = true;
-    pipFlags = [ "--no-deps" ];
-    nativeBuildInputs = [ config.deps.gcc ];
-  };
-
-}   
         buildPythonPackage = {
           pyproject = lib.mkForce true;
           build-system = [ config.deps.python.pkgs.setuptools ];
