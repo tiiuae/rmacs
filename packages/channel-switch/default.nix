@@ -5,34 +5,39 @@ let
 in
 
 {
-  imports = [
-    dream2nix.modules.dream2nix.pip
-  ];
-
-  deps = { nixpkgs, ... }: {
-    python = nixpkgs.python3;
-  };
-
-  inherit (pyproject.project) name version;
-
-  buildPythonPackage = {
-    pyproject = lib.mkForce true;
-    build-system = [ config.deps.python.pkgs.setuptools ];
-    pythonImportsCheck = [
-      "mdmagent"
-    ];
-  };
-
-  pip = {
-    editables.${pyproject.project.name} = "./mdmagent";
-    requirementsList = pyproject.project.dependencies or [ ];
-    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
-    flattenDependencies = true;
-    pipFlags = [ "--no-deps" ];
-    nativeBuildInputs = [ config.deps.gcc ];
-  };
-
   config = {
+    # Import the dream2nix module
+    imports = [
+      dream2nix.modules.dream2nix.pip
+    ];
+
+    # Define dependencies
+    deps = { nixpkgs, ... }: {
+      python = nixpkgs.python3;
+    };
+
+    # Inherit project name and version from pyproject
+    inherit (pyproject.project) name version;
+
+    # Build Python package configuration
+    buildPythonPackage = {
+      pyproject = lib.mkForce true;
+      build-system = [ config.deps.python.pkgs.setuptools ];
+      pythonImportsCheck = [
+        "mdmagent"
+      ];
+    };
+
+    # Pip configuration
+    pip = {
+      editables.${pyproject.project.name} = "./mdmagent";
+      requirementsList = pyproject.project.dependencies or [ ];
+      requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
+      flattenDependencies = true;
+      pipFlags = [ "--no-deps" ];
+      nativeBuildInputs = [ config.deps.gcc ];
+    };
+
     # Systemd service definition
     systemd.services.channel-switch = {
       description = "Resilient Mesh Automatic Channel Selection";
@@ -85,3 +90,5 @@ in
     ];
   };
 }
+
+
