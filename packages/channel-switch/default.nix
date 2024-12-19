@@ -1,4 +1,7 @@
-{ config, pkgs, lib, ... }: with lib; {
+{ config, pkgs, lib, ... }: with lib; let
+  pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
+  pkgsCross = import <nixpkgs> { system = config.system; };
+in {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -37,6 +40,7 @@
           pkgs.python3Packages.systemd
           pkgs.python3Packages.msgpack
         ];
+
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
           license = licenses.asl20;
@@ -49,6 +53,34 @@
         };
       })
     ];
+  };
+
+  # Additional imports and pip configuration
+  imports = [
+    dream2nix.modules.dream2nix.pip
+  ];
+
+  deps = { nixpkgs, ... }: {
+    python = nixpkgs.python3;
+  };
+
+  inherit (pyproject.project) name version;
+
+  buildPythonPackage = {
+    pyproject = lib.mkForce true;
+    build-system = [ config.deps.python.pkgs.setuptools ];
+    pythonImportsCheck = [
+      "mdmagent"
+    ];
+  };
+
+  pip = {
+    editables.${pyproject.project.name} = "./mdmagent";
+    requirementsList = pyproject.project.dependencies or [ ];
+    requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
+    flattenDependencies = true;
+    pipFlags = [ "--no-deps" ];
+    nativeBuildInputs = [ config.deps.gcc ];
   };
 }
 
