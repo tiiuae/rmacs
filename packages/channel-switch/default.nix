@@ -1,7 +1,7 @@
 { config, pkgs, lib, dream2nix,... }:
 
 let
-  pyproject = lib.importTOML (config.mkDerivation.src + "/pyproject.toml");
+  pyproject = lib.importTOML (./pyproject.toml);
 in
 
 {
@@ -11,18 +11,10 @@ in
       dream2nix.modules.dream2nix.pip
     ];
 
-    # Define dependencies
-    deps = { nixpkgs, ... }: {
-      python = nixpkgs.python3;
-    };
-
-    # Inherit project name and version from pyproject
-    inherit (pyproject.project) name version;
-
     # Build Python package configuration
     buildPythonPackage = {
       pyproject = lib.mkForce true;
-      build-system = [ config.deps.python.pkgs.setuptools ];
+      build-system = [ pkgs.python3Packages.setuptools ];
       pythonImportsCheck = [
         "mdmagent"
       ];
@@ -35,7 +27,7 @@ in
       requirementsFiles = pyproject.tool.setuptools.dynamic.dependencies.file or [ ];
       flattenDependencies = true;
       pipFlags = [ "--no-deps" ];
-      nativeBuildInputs = [ config.deps.gcc ];
+      nativeBuildInputs = [ pkgs.gcc ];
     };
 
     # Systemd service definition
@@ -90,5 +82,3 @@ in
     ];
   };
 }
-
-
