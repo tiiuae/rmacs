@@ -66,14 +66,6 @@ in {
     inherit (pyproject.project) name version;
     
 
-    buildPythonPackage = {
-      pyproject = lib.mkForce true;
-      #build-system = [ config.deps.python.pkgs.setuptools ];
-      pythonImportsCheck = [
-        "mdmagent"
-      ];
-    };
-
     pip = {
       editables.${pyproject.project.name} = "./mdmagent";
       requirementsList = pyproject.project.dependencies or [ ];
