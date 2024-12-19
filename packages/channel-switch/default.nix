@@ -64,25 +64,11 @@ in {
     };
 
     inherit (pyproject.project) name version;
-    with config.deps;
-          [
-            ebtables
-            openssl
-            libfaketime
-            batctl
-            killall
-            iw
-            iproute2
-            kmod
-            coreutils
-            gnugrep
-            gawk
-            gnused
-          ]
+    
 
     buildPythonPackage = {
       pyproject = lib.mkForce true;
-      build-system = [ config.deps.python.pkgs.setuptools ];
+      #build-system = [ config.deps.python.pkgs.setuptools ];
       pythonImportsCheck = [
         "mdmagent"
       ];
