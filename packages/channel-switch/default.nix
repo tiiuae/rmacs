@@ -1,4 +1,5 @@
-{ config, pkgs, lib, ... }: with lib; {
+{ config, pkgs, lib, ... }: 
+with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
