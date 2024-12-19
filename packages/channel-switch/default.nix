@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
   let
     pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
- with lib; {
+  with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
