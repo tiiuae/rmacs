@@ -1,7 +1,6 @@
-{ config, pkgs, lib, ... }: with lib; {
+{ config, pkgs, lib, ... }:
+ with lib; {
   config = {
-    let
-  I pyproject = lib.importTOML (config.mkDerivation.src + /pyproject.toml);
     # Systemd service definition
     systemd.services.channel-switch = {
       description = "Resilient Mesh Automatic Channel Selection";
