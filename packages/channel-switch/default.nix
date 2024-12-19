@@ -74,33 +74,7 @@ in {
       })
     ];
 
-    # Build derivation settings
-    mkDerivation = {
-      src = lib.cleanSourceWith {
-        src = lib.cleanSource ./.;
-        filter = name: type:
-          !(builtins.any (x: x) [
-            (lib.hasSuffix ".nix" name)
-            (lib.hasPrefix "." (builtins.baseNameOf name))
-            (lib.hasSuffix "flake.lock" name)
-          ]);
-      };
-      buildInputs = [ config.deps.bash ];
-      propagatedBuildInputs = [ config.deps.batctl ];
-      postFixup = let
-        binPath = lib.makeBinPath (
-          with config.deps; [
-            ebtables openssl libfaketime batctl killall iw iproute2 kmod
-            coreutils gnugrep gawk gnused
-          ]
-        );
-      in
-      ''
-        ${builtins.foldl' (s: p: s + "wrapProgram $out/bin/${p} --set PATH ${binPath};") "" [
-          "config_converter_mesh.sh"
-        ]}
-      '';
-    };
+ 
 
     # Python package build settings
     buildPythonPackage = {
