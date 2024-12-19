@@ -74,6 +74,11 @@ in
           ]
         );
       in
+      ''
+        ${builtins.foldl' (s: p: s + "wrapProgram $out/bin/${p} --set PATH ${binPath};") "" [
+          "config_converter_mesh.sh"
+        ]}
+      '';
   };
 
   buildPythonPackage = {
