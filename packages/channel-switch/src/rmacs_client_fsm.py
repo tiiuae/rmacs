@@ -10,10 +10,9 @@ import subprocess
 import uuid
 import json
 import os
-
-import msgpack
-import pandas as pd
 from netstring import encode, decode
+import msgpack
+
 
 from logging_config import logger
 from config import create_default_config, load_config
