@@ -15,7 +15,7 @@ in
     };
 
 inherit (pyproject.project) name version;
-};
+}
 
   buildPythonPackage = {
     pyproject = lib.mkForce true;
