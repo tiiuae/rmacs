@@ -56,7 +56,13 @@ def start_client(args) -> None:
     # logger.info(f"Starting {client_file} from {client_script_path}")
     #run_command(["python", client_script_path], args, 'Failed to run rmacs_client_fsm.py')
     logger.info(f"Starting rmacs client..........")
-    run_command(["rmacs_client"])
+    try:
+        # Start or restart the service using systemctl
+        run_command(["sudo", "systemctl", "restart", "rmacs_client"])
+        logger.info("RMACS client service started successfully.")
+    except Exception as e:
+        logger.error(f"Failed to start rmacs_client service: {e}")
+        raise
 
 
 def start_rmacs_scripts(config) -> None:
