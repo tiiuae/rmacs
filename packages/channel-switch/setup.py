@@ -21,8 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'channel-switch=src.rmacs_manager:main',
-            #'channel-switch=src.rmacs_server_fsm:main',
-            #'channel-switch=src.rmacs_client_fsm:main',
+            'rmacs_server=src.rmacs_server_fsm:main',
+            'rmacs_client=src.rmacs_client_fsm:main',
         ],
     },
     install_requires=[
