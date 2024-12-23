@@ -9,7 +9,7 @@ from typing import BinaryIO
 import json
 import re
 
-import pandas as pd
+#import pandas as pd
 
 from config import load_config
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
