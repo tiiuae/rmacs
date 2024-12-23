@@ -58,11 +58,11 @@ def start_client(args) -> None:
     logger.info(f"Starting rmacs client..........")
     try:
         # Start or restart the service using systemctl
-        run_command(["sudo", "systemctl", "restart", "rmacs_client"],args,
+        run_command(["rmacs_client"],args,
             "Failed to start rmacs_client service")
-        logger.info("RMACS client service started successfully.")
+        logger.info("++RMACS client service started successfully.")
     except Exception as e:
-        logger.error(f"Failed to start rmacs_client service: {e}")
+        logger.error(f"++Failed to start rmacs_client service: {e}")
         raise
 
 
