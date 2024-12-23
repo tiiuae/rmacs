@@ -13,7 +13,6 @@ if parent_directory not in sys.path:
 from config import create_default_config, load_config
 from logging_config import logger
 from rmacs_util import get_interface_operstate, get_channel_bw, is_process_running, kill_process_by_pid, run_command
-
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 CONFIG_DIR = "/etc/meshshield"
 
@@ -46,16 +45,18 @@ def start_client(args) -> None:
     param args: Configuration options.
     """
     # Define client file name
-    client_file = "rmacs_client_fsm.py"
-    client_script_path = get_script_path(client_file)
-    # Kill any running instance of server file before starting it
-    if is_process_running(client_file):
-        kill_process_by_pid(client_file)
-    # Start rmacs client script
-    #logger.info(f"Started {client_file}")
-    #run_command(["python", f"{client_file}"], args,'Failed to run rmacs_client_fsm file')
-    logger.info(f"Starting {client_file} from {client_script_path}")
-    run_command(["python", client_script_path], args, 'Failed to run rmacs_client_fsm.py')
+    # client_file = "rmacs_client_fsm.py"
+    # client_script_path = get_script_path(client_file)
+    # # Kill any running instance of server file before starting it
+    # if is_process_running(client_file):
+    #     kill_process_by_pid(client_file)
+    # # Start rmacs client script
+    # #logger.info(f"Started {client_file}")
+    # #run_command(["python", f"{client_file}"], args,'Failed to run rmacs_client_fsm file')
+    # logger.info(f"Starting {client_file} from {client_script_path}")
+    #run_command(["python", client_script_path], args, 'Failed to run rmacs_client_fsm.py')
+    logger.info(f"Starting rmacs client..........")
+    run_command(["rmacs_client"])
 
 
 def start_rmacs_scripts(config) -> None:

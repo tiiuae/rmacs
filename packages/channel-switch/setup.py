@@ -13,7 +13,7 @@ create_init_file(package_dir)
 
 setup(
     name="channel-switch",
-    version="1.0.0",
+    version="4.0.0",
     author="Roopa Shanmugam",
     author_email="roopa.shanmugam@tii.ae",
     description="Resilient Mesh Automatic Channel Selection",
