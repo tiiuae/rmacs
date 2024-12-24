@@ -99,7 +99,8 @@ class Spectral_Scan:
 
         try:
             # Run the subprocess command
-            result = subprocess.run(['/root/fft_eval_json', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            #result = subprocess.run(['/root/fft_eval_json', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             # Check return code and handle output
             if result.returncode == 0:

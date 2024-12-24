@@ -37,6 +37,9 @@
           pkgs.python3Packages.systemd
           pkgs.python3Packages.msgpack
         ];
+	makeWrapperArgs = [
+          ''--prefix PATH : "${pkgs.ss-analyser}/bin"''
+        ];
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
           license = licenses.asl20;
