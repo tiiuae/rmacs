@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ss-analyser, ... }: with lib; {
+{ config, pkgs, lib, ... }: with lib; {
   config = {
     # Systemd service definition
     systemd.services.channel-switch = {
@@ -36,9 +36,6 @@
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
           pkgs.python3Packages.msgpack
-        ];
-	makeWrapperArgs = [
-          ''--prefix PATH : "${ss-analyser}/bin"''
         ];
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";
