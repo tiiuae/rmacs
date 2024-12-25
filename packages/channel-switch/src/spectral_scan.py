@@ -33,7 +33,7 @@ class Spectral_Scan:
         Initialize spectral scan.
         """
         print(" initialize method called............")
-        if self.driver == "ath10k":
+        if self.driver == ["ath10k", "ath9k"]:
             output_file = f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan_ctl"
             print(f"output file : {output_file}")
 
