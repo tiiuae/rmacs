@@ -2,7 +2,7 @@ import socket
 import struct
 import logging
 #from netstring import encode, decode
-#import msgpack
+import msgpack
 
 
 #from config_old import Config, MULTICAST_CONFIG
@@ -64,17 +64,17 @@ def send_data(socket, data, interface) -> None:
     try:
         MULTICAST_GROUP, MULTICAST_PORT = get_multicast_config(interface)
         # Create the JSON message
-        message = create_json_message(msg_type="COMMAND", payload=data)
-        socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
-        #serialized_data = msgpack.packb(data)
+        #message = create_json_message(msg_type="COMMAND", payload=data)
+        #socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
+        serialized_data = msgpack.packb(data)
         #netstring_data = encode(serialized_data)
-        #socket.sendto(netstring_data, (MULTICAST_GROUP, MULTICAST_PORT))  
+        socket.sendto(serialized_data.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
         logger.info(f"Sent report to Mutlicast")
         return None
     except BrokenPipeError:
         logging.info(f"Broken pipe error")
     except Exception as e:
-        logging.info(f"Error sending data to Multicast")
+        logging.info(f"**Error in sending data : {e}")
         logger.info(f"Error sending data : {e}")
 
         
