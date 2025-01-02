@@ -337,8 +337,8 @@ class InterferenceDetection(threading.Thread):
                 # Deserialize the MessagePack message
                 try:
                     #unpacked_data = msgpack.unpackb(data, raw=False)
-                    #message_id: str = unpacked_data.get("message_id")
-                    message_id: str = data.get("message_id")
+                    #message_id: str = unpacked_parsed_message.get("message_id")
+                    message_id: str = parsed_message.get("message_id")
 
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
@@ -349,14 +349,14 @@ class InterferenceDetection(threading.Thread):
 
                             #with self.msg_id_lock:
                             self.processed_ids.add(message_id)
-                            action_id: int = data.get("a_id")
+                            action_id: int = parsed_message.get("a_id")
                             action_str: str = id_to_action.get(action_id)
                             #logger.info(f"Received message: {unpacked_data} via interface : {interface}")
 
 
                             # Handle frequency switch request
                             if action_str in ["switch_frequency", "operating_frequency"]:
-                                requested_switch_freq = data.get("freq")
+                                requested_switch_freq = parsed_message.get("freq")
                                 self.update_operating_freq(requested_switch_freq)
                                 cur_freq = get_mesh_freq(self.nw_interface)
                                 logger.info(f"The requested switch freq: {requested_switch_freq} and current operating freq: {cur_freq} via interface : {interface}")

@@ -517,25 +517,25 @@ class RMACSServer:
                 try:
                     #unpacked_data = msgpack.unpackb(data, raw=False)
                     
-                    message_id: str = data.get("message_id")
+                    message_id: str = parsed_message.get("message_id")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.info(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
                         else:
                             logger.info(f"{thread_id}: New Msg: Processing Message with ID : {message_id} via interface : {interface}")
-                            device_id: str = data.get("device")
+                            device_id: str = parsed_message.get("device")
                             # Add the unique ID to the processed set
                             self.processed_ids.add(message_id)
-                            action_id: int = data.get("a_id")
+                            action_id: int = parsed_message.get("a_id")
                             action_str: str = id_to_action.get(action_id)
                             #logger.info(f"Received message: {data}")
     
                             # Bad channel quality index received from client
                             if action_str == "bad_channel_quality_index":
                                 current_received_bcqi_alert = time.time()
-                                device_id = data.get("device")
-                                bcqi_reported_freq = data.get("freq")
-                                channel_quality_index = data.get("qual")
+                                device_id = parsed_message.get("device")
+                                bcqi_reported_freq = parsed_message.get("freq")
+                                channel_quality_index = parsed_message.get("qual")
                                 current_operating_freq = get_mesh_freq(self.nw_interface)
                                 logger.info(f"Received BCQI report for freq :{bcqi_reported_freq} of channel quality index : {channel_quality_index} from device : {device_id} via interface : {interface}")
                                 if current_operating_freq == bcqi_reported_freq:
