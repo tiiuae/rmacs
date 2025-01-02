@@ -317,8 +317,15 @@ class InterferenceDetection(threading.Thread):
                 # Receive incoming messages and decode the netstring encoded data
                 try:
                     #data = decode(socket.recv(1024))
-                    data = socket.recvfrom(1024)
+                    data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
+                    logger.info(f"Received message from {address[0]}")
+                    logger.info(f"Message: {data}")
+
+                    # Parse the JSON message
+                    parsed_message = json.loads(data)
+                    logger.info(f"Parsed Message: {parsed_message}")
+                    
                     if not data:
                         logger.info("No data...")
                         break

@@ -5,6 +5,7 @@ import uuid
 import subprocess
 import os
 import sys
+import json
 #from collections import Counter
 from enum import auto, Enum
 from typing import List, Tuple, Dict
@@ -18,7 +19,7 @@ if parent_directory not in sys.path:
 from config import load_config
 
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
-from rmacs_util import get_mesh_freq, get_mac_address
+from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw
 from logging_config import logger
 from rmacs_comms import rmacs_comms, send_data
 
@@ -169,15 +170,19 @@ class RMACSServer:
             self.running = True
                # Establish socket connections for all interfaces
             for interface in self.ch_interfaces:
-                try:
-                    socket = rmacs_comms(interface)
-                    self.sockets[interface] = socket
-                    listen_thread = threading.Thread(target=self.receive_messages, args=(socket, interface))
-                    self.listen_threads.append(listen_thread)
-                    listen_thread.start()
-                    logger.info(f"Listening on interface: {interface}")
-                except ConnectionError as e:
-                    logger.error(f"Connection error on {interface}: {e}")
+                if get_interface_operstate(interface):
+                    logger.info(f'Radio interface:[{interface}] is up with channel BW : {get_channel_bw(interface)}MHz')
+                    try:
+                        socket = rmacs_comms(interface)
+                        self.sockets[interface] = socket
+                        listen_thread = threading.Thread(target=self.receive_messages, args=(socket, interface))
+                        self.listen_threads.append(listen_thread)
+                        listen_thread.start()
+                        logger.info(f"Listening on interface: {interface}")
+                    except ConnectionError as e:
+                        logger.error(f"Connection error on {interface}: {e}")
+                else:
+                    logger.info(f'Radio interface:[{interface}] is not up, cannot create a multicast socket connection to it.')
             # Start the server FSM thread
             logger.info("Server started and listening...")
             self.run_server_fsm_thread = threading.Thread(target=self.run_server_fsm)
@@ -368,7 +373,7 @@ class RMACSServer:
         
         try:
             self.sorted_frequencies = sorted(self.freq_quality_report.items(),key=lambda item: item[1]['Average_quality'])
-            logger.info(f'++++ Sorted freq : {self.sorted_frequencies}  ')
+            logger.info(f'Sorted freq : {self.sorted_frequencies}  ')
             self.top_freq = self.sorted_frequencies[0][0]
             self.seq_limit = min(self.seq_limit, len(self.sorted_frequencies))
             if self.top_freq_stability_counter:
@@ -492,8 +497,15 @@ class RMACSServer:
                 # Receive incoming messages and decode the netstring encoded data
                 try:
                     #data = decode(socket.recv(1024))
-                    data = socket.recvfrom(1024)
+                    data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
+                    logger.info(f"Received message from {address[0]}")
+                    logger.info(f"Message: {data}")
+
+                    # Parse the JSON message
+                    parsed_message = json.loads(data)
+                    logger.info(f"Parsed Message: {parsed_message}")
+                    
                     if not data:
                         logger.info("No data... break")
                 except Exception as e:
