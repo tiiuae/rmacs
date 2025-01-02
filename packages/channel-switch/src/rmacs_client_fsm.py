@@ -320,7 +320,7 @@ class InterferenceDetection(threading.Thread):
                         break
                 except Exception as e:
                     # Handle netstring decoding errors
-                    logger.error(f"Failed to decode netstring: {e} via interface : {interface} ")
+                    logger.error(f"*Failed to decode netstring: {e} via interface : {interface} ")
                     break
 
                 # Deserialize the MessagePack message

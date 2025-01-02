@@ -254,7 +254,7 @@ def run_command(command, config, error_message) -> None:
         logger.error(f"{error_message}. Error: {e}")
         raise Exception(error_message) from e
     
-def create_json_message(msg_type,payload=None, status_code=0):
+def create_json_message(msg_type, payload=None, status_code=0):
     """
     Create a JSON message based on input parameters without source address.
     
@@ -272,6 +272,7 @@ def create_json_message(msg_type,payload=None, status_code=0):
     }
 
     # Add optional payload if provided
+    logger.info(f"payload : {payload}, msg_type : {msg_type}")
     if payload:
         message["payload"] = payload
 
