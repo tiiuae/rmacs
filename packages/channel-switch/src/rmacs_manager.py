@@ -26,6 +26,7 @@ def start_server(args) -> None:
 
     param args: Configuration options.
     """
+    '''
     # Define server file name
     server_file = "rmacs_server_fsm.py"
     # Kill any running instance of server file before starting it
@@ -36,6 +37,17 @@ def start_server(args) -> None:
     logger.info(f"Started {server_file}")
     #run_command(["python", f"{server_file}"],args,'Failed to run rmacs_server_fsm file')
     run_command(["python", server_script_path], args, 'Failed to run rmacs_server_fsm.py')
+    '''
+    logger.info(f"Starting rmacs server..........")
+    try:
+        # Start or restart the service using systemctl
+        run_command(["rmacs_server"],args,
+            "Failed to start rmacs_server service")
+        logger.info("RMACS server service started successfully.")
+    except Exception as e:
+        logger.error(f"Failed to start rmacs_server service: {e}")
+        raise
+
 
 
 def start_client(args) -> None:
