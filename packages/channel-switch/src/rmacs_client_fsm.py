@@ -21,7 +21,7 @@ if parent_directory not in sys.path:
 from logging_config import logger
 from config import load_config
 from traffic_monitor import TrafficMonitor
-from rmacs_util import get_mesh_freq, get_mac_address
+from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw
 from spectral_scan import Spectral_Scan
 from rmacs_comms import rmacs_comms, send_data
 
@@ -242,15 +242,19 @@ class InterferenceDetection(threading.Thread):
         try:
             self.running = True
             for interface in self.ch_interfaces:
-                try:
-                    socket = rmacs_comms(interface)
-                    self.sockets[interface] = socket
-                    listen_thread = threading.Thread(target=self.receive_messages, args=(socket, interface))
-                    self.listen_threads.append(listen_thread)
-                    listen_thread.start()
-                    logger.info(f"Listening on interface: {interface}")
-                except ConnectionError as e:
-                    logger.error(f"Connection error on {interface}: {e}")
+                if get_interface_operstate(interface):
+                    logger.info(f'Radio interface:[{interface}] is up with channel BW : {get_channel_bw(interface)}MHz')
+                    try:
+                        socket = rmacs_comms(interface)
+                        self.sockets[interface] = socket
+                        listen_thread = threading.Thread(target=self.receive_messages, args=(socket, interface))
+                        self.listen_threads.append(listen_thread)
+                        listen_thread.start()
+                        logger.info(f"Listening on interface: {interface}")
+                    except ConnectionError as e:
+                        logger.error(f"Connection error on {interface}: {e}")
+                else:
+                    logger.info(f'Radio interface:[{interface}] is not up, cannot create a multicast socket connection to it.')                    
             # Start the server FSM thread
             logger.info("Server started and listening...")
             

@@ -69,6 +69,7 @@ def send_data(socket, data, interface) -> None:
         #socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
         #serialized_data = msgpack.packb(data)
         #netstring_data = encode(serialized_data)
+        logger.info(f"Debug*** : socket = {socket} ")
         socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
         logger.info(f"*Sent report to Mutlicast")
         return None
