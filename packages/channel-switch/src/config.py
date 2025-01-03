@@ -6,7 +6,7 @@ import logging
 default_config = {
     "MULTICAST_CONFIG": {
         'wlp1s0': {'group': 'ff02::1', 'port': 12345},
-        'halow1': {'group': 'ff02::1', 'port': 12346},
+        'morse1': {'group': 'ff02::1', 'port': 12346},
         'osf0': {'group': 'ff13::39', 'port': 12345},
     },
     "RMACS_Config": {
@@ -23,7 +23,7 @@ default_config = {
         "radio_interface": [
             ["ath9k", "wlp3s0"],
             ["ath10k", "wlp2s0"],
-            ["halow", "halow1"]
+            ["morse1", "morse1"]
         ],
         "traffic_threshold": 2500,
         "phy_error_limit": 1500,
