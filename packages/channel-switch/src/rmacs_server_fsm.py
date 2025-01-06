@@ -546,7 +546,8 @@ class RMACSServer:
                             # Channel report received from client
                             elif action_str == "channel_quality_report":
                                 self.channel_report_message = data
-
+                    logger.info("*****Clearing received msg....")
+                    data = {}
                 except Exception as e:
                     logger.error(f"Error in received message: {e}")
                     continue
