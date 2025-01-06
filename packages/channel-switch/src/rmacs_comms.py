@@ -1,6 +1,5 @@
 import socket
 import struct
-import logging
 #from netstring import encode, decode
 import msgpack
 
@@ -50,13 +49,13 @@ def rmacs_comms(interface):
         logger.info(f"Server listening on {MULTICAST_GROUP}:{MULTICAST_PORT}")
         return sock
     except socket.error as sock_err:
-            logging.error(f"Socket error occurred: {sock_err}")
+            logger.error(f"Socket error occurred: {sock_err}")
             return None
     except ValueError as val_err:
-        logging.error(f"Value error occurred: {val_err}")
+        logger.error(f"Value error occurred: {val_err}")
         return None
     except Exception as ex:
-        logging.error(f"An unexpected error occurred: {ex}")
+        logger.error(f"An unexpected error occurred: {ex}")
         return None
     
 def send_data(socket, data, interface) -> None:
@@ -75,9 +74,9 @@ def send_data(socket, data, interface) -> None:
             
         return None
     except BrokenPipeError:
-        logging.info(f"Broken pipe error")
+        logger.info(f"Broken pipe error")
     except Exception as e:
-        logging.info(f"*Error in sending data : {e}")
+        logger.info(f"*Error in sending data : {e}")
         logger.info(f"Error sending data : {e}")
 
         
