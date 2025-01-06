@@ -103,9 +103,9 @@ class Spectral_Scan:
             
             # Check return code and handle output
             if result.returncode == 0:
-                logger.info("Channel Quality Report :", result.stdout)
                 output = result.stdout
                 output = re.sub(r'([{,])\s*(\w+)\s*:', r'\1"\2":', output)
+                logger.info("+Channel Quality Report :", result.stdout)
                 return output
             else:
                 logger.info(f"Command failed with return code {result.returncode}. Error:", result.stderr)
