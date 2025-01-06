@@ -278,7 +278,7 @@ class InterferenceDetection(threading.Thread):
                 # Sleep for a short duration before checking conditions again
                 time.sleep(5)
             except Exception as e:
-                logger.info(f"Exception in run: {e}")
+                logger.info(f"+Exception in run: {e}")
                 return None
                
     def update_db(self, args) -> None:

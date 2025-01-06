@@ -32,7 +32,7 @@ class Spectral_Scan:
         """
         Initialize spectral scan.
         """
-        logger.info(" initialize method called............")
+        logger.info("Initialize method called............")
         if self.driver == "ath9k":
             output_file = f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan_ctl"
             logger.info(f"output file : {output_file}")
@@ -45,7 +45,7 @@ class Spectral_Scan:
             with open(output_file, "w") as file:
                 subprocess.call(cmd_trigger, stdout=file, stderr=subprocess.PIPE, shell=False)
         else:
-            raise Exception(f"**Invalid driver: {self.driver}")
+            raise Exception(f"Invalid driver: {self.driver}")
 
     def execute_scan(self, freq: str) -> None:
         """
