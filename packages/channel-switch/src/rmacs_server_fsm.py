@@ -486,9 +486,6 @@ class RMACSServer:
         Handles incoming messages from the client.
         """
         logger.info(" RMACS Server receive msg is started.........")
-        
-        # set to store the unique IDs of processed messages
-        #self.processed_ids = set()
         current_received_bcqi_alert = 0
         last_received_bcqi_alert = 0
         thread_id = threading.get_native_id()
@@ -496,18 +493,11 @@ class RMACSServer:
             try:
                 # Receive incoming messages and decode the netstring encoded data
                 try:
-                    #data = decode(socket.recv(1024))
                     data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
                     logger.info(f"Received message from {address[0]}")
-                    logger.info(f"Message: {data}")
-
                     # Parse the JSON message
                     parsed_message = json.loads(data)
-                    logger.info(f"Parsed Message: {parsed_message}")
-                    
-                    if not data:
-                        logger.info("No data... break")
                 except Exception as e:
                     # Handle netstring decoding errors
                     logger.info(f"Failed to decode netstring from interface: {interface}")
@@ -515,29 +505,25 @@ class RMACSServer:
 
                 # Deserialize the MessagePack message
                 try:
-                    #unpacked_data = msgpack.unpackb(data, raw=False)
-                    
-                    #message_id: str = parsed_message.get("message_id")
                     message_id = parsed_message.get("payload", {}).get("message_id")
-                    logger.info(f"+Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
-                            logger.info(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
+                            logger.debug(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
                         else:
-                            logger.info(f"{thread_id}: New Msg: Processing Message with ID : {message_id} via interface : {interface}")
-                            device_id: str = parsed_message.get("device")
+                            logger.debug(f"{thread_id}: New Msg: Processing Message with ID : {message_id} via interface : {interface}")
+                            device_id: str = parsed_message.get("payload", {}).get("device")
                             # Add the unique ID to the processed set
                             self.processed_ids.add(message_id)
-                            action_id: int = parsed_message.get("a_id")
+                            action_id: int = parsed_message.get("payload", {}).get("a_id")
                             action_str: str = id_to_action.get(action_id)
                             #logger.info(f"Received message: {data}")
     
                             # Bad channel quality index received from client
                             if action_str == "bad_channel_quality_index":
                                 current_received_bcqi_alert = time.time()
-                                device_id = parsed_message.get("device")
-                                bcqi_reported_freq = parsed_message.get("freq")
-                                channel_quality_index = parsed_message.get("qual")
+                                device_id = parsed_message.get("payload", {}).get("device")
+                                bcqi_reported_freq = parsed_message.get("payload", {}).get("freq")
+                                channel_quality_index = parsed_message.get("payload", {}).get("qual")
                                 current_operating_freq = get_mesh_freq(self.nw_interface)
                                 logger.info(f"Received BCQI report for freq :{bcqi_reported_freq} of channel quality index : {channel_quality_index} from device : {device_id} via interface : {interface}")
                                 if current_operating_freq == bcqi_reported_freq:

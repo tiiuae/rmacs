@@ -305,28 +305,19 @@ class InterferenceDetection(threading.Thread):
         Receive incoming messages from the orchestrator.
         """
         logger.info("Client receive msg thread is started.........")
-        # A set to store the unique IDs of processed messages
-        #self.processed_ids = set()
-        # logger.info(f"The processed_id : {id(self.processed_ids)}")
-        thread_id = threading.get_native_id()
-        logger.info(f"The running thread id is : {thread_id}")
         while self.running:
             try:
                 # Receive incoming messages and decode the netstring encoded data
                 try:
-                    #data = decode(socket.recv(1024))
                     data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
-                    logger.info(f"Received message from {address[0]}")
-                    logger.info(f"Message: {data}")
+                    #logger.info(f"Received message from {address[0]}")
+                    #logger.info(f"Message: {data}")
 
                     # Parse the JSON message
                     parsed_message = json.loads(data)
-                    logger.info(f"Parsed Message: {parsed_message}")
+                    #logger.info(f"Parsed Message: {parsed_message}")
                     
-                    if not data:
-                        logger.info("No data...")
-                        break
                 except Exception as e:
                     # Handle netstring decoding errors
                     logger.error(f"Failed to decode netstring: {e} via interface : {interface} ")
@@ -334,28 +325,25 @@ class InterferenceDetection(threading.Thread):
 
                 # Deserialize the MessagePack message
                 try:
-                    #unpacked_data = msgpack.unpackb(data, raw=False)
-                    #message_id: str = unpacked_parsed_message.get("message_id")
-                    #message_id: str = parsed_message.get("message_id")
                     message_id = parsed_message.get("payload", {}).get("message_id")
-                    logger.info(f"++Recevied msg id : {message_id}")
+                    logger.info(f"Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
-                            logger.info(f"{thread_id}: Duplicate Msg : Message with ID {message_id} has already been processed and was received from interface : {interface}. Ignoring.")
+                            logger.debug(f"Duplicate Msg : Message with ID {message_id} has already been processed and was received from interface : {interface}. Ignoring.")
                         else:
-                            logger.info(f"{thread_id}: New Msg: Processing message: {message_id} : msg : {data} via interface : {interface}")
+                            logger.debug(f"New Msg: Processing message: {message_id} : msg : {data} via interface : {interface}")
                             # Add the unique ID to the processed set
 
                             #with self.msg_id_lock:
                             self.processed_ids.add(message_id)
-                            action_id: int = parsed_message.get("a_id")
+                            action_id: int = parsed_message.get("payload", {}).get("a_id")
                             action_str: str = id_to_action.get(action_id)
                             #logger.info(f"Received message: {unpacked_data} via interface : {interface}")
 
 
                             # Handle frequency switch request
                             if action_str in ["switch_frequency", "operating_frequency"]:
-                                requested_switch_freq = parsed_message.get("freq")
+                                requested_switch_freq = parsed_message.get("payload", {}).get("freq")
                                 self.update_operating_freq(requested_switch_freq)
                                 cur_freq = get_mesh_freq(self.nw_interface)
                                 logger.info(f"The requested switch freq: {requested_switch_freq} and current operating freq: {cur_freq} via interface : {interface}")
@@ -363,18 +351,12 @@ class InterferenceDetection(threading.Thread):
                                     self.switching_frequency = requested_switch_freq
                                     logger.info(f"Handling action_str : {action_str} via interface : {interface}")
                                     self.fsm.trigger(ClientEvent.EXT_SWITCH_EVENT)
-
-
-            #    except msgpack.UnpackException as e:
-            #         logger.error(f"Failed to decode MessagePack: {e}")
-            #         continue
-
                 except Exception as e:
-                    logger.error(f"Error in received message: {e}")
+                    logger.warning(f"Error in received message: {e}")
                     continue
 
             except ConnectionResetError:
-                logger.error("Connection forcibly closed by the remote host")
+                logger.warning("Connection forcibly closed by the remote host")
                 break
     def sending_bad_channel_quality_index(self, trigger_event) -> None:
         """

@@ -10,7 +10,7 @@ default_config = {
         'osf0': {'group': 'ff13::39', 'port': 12345},
     },
     "RMACS_Config": {
-        "orchestra_node": False,
+        "orchestra_node": True,
         "primary_radio" : "wlp1s0",
         "osf_interface": "osf0",
         "nw_interface": "wlp1s0",
