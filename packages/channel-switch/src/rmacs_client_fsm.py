@@ -329,7 +329,7 @@ class InterferenceDetection(threading.Thread):
                         break
                 except Exception as e:
                     # Handle netstring decoding errors
-                    logger.error(f"*Failed to decode netstring: {e} via interface : {interface} ")
+                    logger.error(f"Failed to decode netstring: {e} via interface : {interface} ")
                     break
 
                 # Deserialize the MessagePack message
@@ -337,7 +337,7 @@ class InterferenceDetection(threading.Thread):
                     #unpacked_data = msgpack.unpackb(data, raw=False)
                     #message_id: str = unpacked_parsed_message.get("message_id")
                     message_id: str = parsed_message.get("message_id")
-
+                    logger.info(f"+Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.info(f"{thread_id}: Duplicate Msg : Message with ID {message_id} has already been processed and was received from interface : {interface}. Ignoring.")

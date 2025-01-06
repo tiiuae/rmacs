@@ -69,7 +69,7 @@ class Spectral_Scan:
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan
-            scan_cmd = ["iw", "dev", f"{self.nw_interface}", "scan", "freq", f"{freq}", "flush"]
+            scan_cmd = ["iw", "dev", f"{self.nw_interface}", "scan", "freq", f"{freq}", "5200", "flush"]
             logger.info(f"scan cmd : {scan_cmd}")
             try: 
                 subprocess.call(scan_cmd, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.DEVNULL)
