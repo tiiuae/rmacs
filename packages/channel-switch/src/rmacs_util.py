@@ -39,7 +39,7 @@ def get_interface_operstate(interface : str) -> bool:
     except Exception as e:
         print(f"Error reading operstate: {e}")
         
-def get_phy_interface(self, driver: str) -> str:
+def get_phy_interface(interface : str) -> str:
     """
     Get phy interface value associated with the driver 
     Arguments:
@@ -47,27 +47,16 @@ def get_phy_interface(self, driver: str) -> str:
     Return: 
     str: Phy interface value associated with the driver name
     """
-    found = False
-    for self.driver, self.interface in self.scan_interface:
-        if self.driver == driver:
-            self.phy_interface_path = f'/sys/class/net/{self.interface}/phy80211/name'
-            print(f"Valid driver: {self.driver}, phy_interface_path is set to : {self.phy_interface_path}")
-            found = True
-            break
-        else:
-            continue 
-    if found:
-        try: 
-            with open(self.phy_interface_path, "r") as file:
-                self.phy_interface = file.read().strip()
-                print(f"Phy interface: {self.phy_interface} for {driver}")
-                return self.phy_interface
-        except FileNotFoundError:
-            print(f"Phy interface is not found for {driver}.")
-        except Exception as e:
-            print(f"Error reading phy_interface: {e}")    
-    else:
-        print("Invalid driver")
+    phy_interface_path = f"/sys/class/net/{interface}/phy80211/name"
+    try:
+        with open(phy_interface_path, "r") as file:
+            phy_interface = file.read().strip()
+            return phy_interface
+    except FileNotFoundError:
+        print(f"Interface {interface} not found.")
+    except Exception as e:
+        print(f"Error reading operstate: {e}")
+ 
 '''       
 def get_ipv6_addr(interface) -> str:
     """

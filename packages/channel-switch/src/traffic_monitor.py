@@ -29,7 +29,6 @@ class TrafficMonitor:
         self.tx_timeout_wait_time = 2
         # Set the Network interface  
         config = load_config(config_file_path)
-        self.phy_interface = config['RMACS_Config']['phy_interface']
         self.nw_interface = config['RMACS_Config']['nw_interface']
         self.traffic_threshold =  config['RMACS_Config']['traffic_threshold']
         #Network statistics file 

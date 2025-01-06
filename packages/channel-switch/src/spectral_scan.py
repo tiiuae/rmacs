@@ -20,9 +20,10 @@ class Spectral_Scan:
     def __init__(self):
         self.VALUES = dict()
         config = load_config(config_file_path)
-        self.phy_interface = config['RMACS_Config']['phy_interface']
+        #self.phy_interface = config['RMACS_Config']['phy_interface']
         self.nw_interface = config['RMACS_Config']['nw_interface']
         self.is_interface_up = get_interface_operstate(self.nw_interface)
+        self.phy_interface = get_phy_interface(self.nw_interface)
         self.driver = config['RMACS_Config']['driver']
         self.bin_file = config['RMACS_Config']['bin_file']
         logger.info(" Spectral scan init method called............")
@@ -105,7 +106,7 @@ class Spectral_Scan:
             if result.returncode == 0:
                 output = result.stdout
                 output = re.sub(r'([{,])\s*(\w+)\s*:', r'\1"\2":', output)
-                logger.info(f"+Channel Quality Report :, {output}")
+                logger.info(f"Channel Quality Report : {output}")
                 return output
             else:
                 logger.info(f"Command failed with return code {result.returncode}. Error:", result.stderr)
