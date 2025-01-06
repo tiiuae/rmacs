@@ -66,12 +66,13 @@ def send_data(socket, data, interface) -> None:
         # Create the JSON message
         payload = data
         message = create_json_message(msg_type="COMMAND", payload=payload)
-        #socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
-        #serialized_data = msgpack.packb(data)
-        #netstring_data = encode(serialized_data)
         logger.info(f"Debug*** : socket = {socket} ")
-        socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
-        logger.info(f"*Sent report to Mutlicast")
+        if socket:
+            socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
+            logger.info(f"*Sent report to Mutlicast")
+        else:
+            logger.info(f"Debug : No socket connection for interface :{interface}")
+            
         return None
     except BrokenPipeError:
         logging.info(f"Broken pipe error")

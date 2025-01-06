@@ -25,17 +25,17 @@ class Spectral_Scan:
         self.is_interface_up = get_interface_operstate(self.nw_interface)
         self.driver = config['RMACS_Config']['driver']
         self.bin_file = config['RMACS_Config']['bin_file']
-        print(" Spectral scan init method called............")
+        logger.info(" Spectral scan init method called............")
         #self.scan_interface = "TBD"
 
     def initialize_scan(self) -> None:
         """
         Initialize spectral scan.
         """
-        print(" initialize method called............")
+        logger.info(" initialize method called............")
         if self.driver == "ath9k":
             output_file = f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan_ctl"
-            print(f"output file : {output_file}")
+            logger.info(f"output file : {output_file}")
 
             cmd_background = ["echo", "background"]
             with open(output_file, "w") as file:
@@ -65,18 +65,18 @@ class Spectral_Scan:
         */
         """
         
-        print(" execute scan method called............")
+        logger.info(" execute scan method called............")
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan
             scan_cmd = ["iw", "dev", f"{self.nw_interface}", "scan", "freq", f"{freq}", "flush"]
-            print(f"scan cmd : {scan_cmd}")
+            logger.info(f"scan cmd : {scan_cmd}")
             try: 
                 subprocess.call(scan_cmd, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.DEVNULL)
             except subprocess.CalledProcessError as e:
-                print(f"Error: {e}")         
+                logger.info(f"Error: {e}")         
         else:
-            print(f"The interface :{self.driver} is not up")
+            logger.info(f"The interface :{self.driver} is not up")
             return
         # Command to stop spectral scan
         cmd_disable = ["echo", "disable"]
@@ -85,7 +85,7 @@ class Spectral_Scan:
             with open(spectral_scan_ctl_file, "w") as file:
                 subprocess.call(cmd_disable, stdout=file, stderr=subprocess.PIPE, shell=False)
         except subprocess.CalledProcessError as e:
-            print(f"Error: {e}")
+            logger.info(f"Error: {e}")
 
         # Command to dump scan output from spectral_scan0 to binary file
         cmd_dump = ["cat", f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan0"]
@@ -93,23 +93,22 @@ class Spectral_Scan:
             with open(self.bin_file, "wb") as output_file:
                 subprocess.call(cmd_dump, stdout=output_file, stderr=subprocess.PIPE, shell=False)
         except subprocess.CalledProcessError as e:
-            print(f"Error: {e}")
+            logger.info(f"Error: {e}")
             
     def run_fft_eval(self, freq:str) -> list[dict]:
 
         try:
             # Run the subprocess command
-            #result = subprocess.run(['/root/fft_eval_json', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             # Check return code and handle output
             if result.returncode == 0:
-                print("Channel Quality Report :", result.stdout)
+                logger.info("Channel Quality Report :", result.stdout)
                 output = result.stdout
                 output = re.sub(r'([{,])\s*(\w+)\s*:', r'\1"\2":', output)
                 return output
             else:
-                print(f"Command failed with return code {result.returncode}. Error:", result.stderr)
+                logger.info(f"Command failed with return code {result.returncode}. Error:", result.stderr)
                 return [{"error": result.stderr}]
 
         except FileNotFoundError as e:

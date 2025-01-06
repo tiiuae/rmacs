@@ -190,7 +190,6 @@ class InterferenceDetection(threading.Thread):
         config = load_config(config_file_path)
         self.traffic_monitor = TrafficMonitor()
         self.channel_bandwidth = config['RMACS_Config']['channel_bandwidth']
-        print(f"the *********** channel bandwidth = {self.channel_bandwidth}")
         self.client_beacon_count = config['RMACS_Config']['client_beacon_count']
         self.nw_interface = config['RMACS_Config']['nw_interface']
         self.switching_frequency = config['RMACS_Config']['starting_frequency']
@@ -272,7 +271,6 @@ class InterferenceDetection(threading.Thread):
         logger.info('RMACS client fsm is running....')
         while self.running:            
             try:
-                logger.info(f"Current FSM state: {self.fsm.state}")
                 if self.fsm.state == ClientState.IDLE:
                     current_time = time.time()
                     count +=1
@@ -308,7 +306,7 @@ class InterferenceDetection(threading.Thread):
         """
         logger.info("Client receive msg thread is started.........")
         # A set to store the unique IDs of processed messages
-        # self.processed_ids = set()
+        #self.processed_ids = set()
         # logger.info(f"The processed_id : {id(self.processed_ids)}")
         thread_id = threading.get_native_id()
         logger.info(f"The running thread id is : {thread_id}")

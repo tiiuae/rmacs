@@ -1,7 +1,4 @@
 import threading
-import yaml
-import msgpack
-#import netifaces
 import signal
 import sys
 import os
@@ -12,7 +9,7 @@ if parent_directory not in sys.path:
 
 from config import create_default_config, load_config
 from logging_config import logger
-from rmacs_util import get_interface_operstate, get_channel_bw, is_process_running, kill_process_by_pid, run_command
+from rmacs_util import get_interface_operstate, get_channel_bw, kill_process_by_pid, run_command
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 CONFIG_DIR = "/etc/meshshield"
 
@@ -26,19 +23,6 @@ def start_server(args) -> None:
 
     param args: Configuration options.
     """
-    '''
-    # Define server file name
-    server_file = "rmacs_server_fsm.py"
-    # Kill any running instance of server file before starting it
-    server_script_path = get_script_path(server_file)
-    if is_process_running(server_file):
-        kill_process_by_pid(server_file)
-    # Start rmacs server script
-    logger.info(f"Started {server_file}")
-    #run_command(["python", f"{server_file}"],args,'Failed to run rmacs_server_fsm file')
-    run_command(["python", server_script_path], args, 'Failed to run rmacs_server_fsm.py')
-    '''
-    logger.info(f"Starting rmacs server..........")
     try:
         # Start or restart the service using systemctl
         run_command(["rmacs_server"],args,
@@ -56,18 +40,6 @@ def start_client(args) -> None:
 
     param args: Configuration options.
     """
-    # Define client file name
-    # client_file = "rmacs_client_fsm.py"
-    # client_script_path = get_script_path(client_file)
-    # # Kill any running instance of server file before starting it
-    # if is_process_running(client_file):
-    #     kill_process_by_pid(client_file)
-    # # Start rmacs client script
-    # #logger.info(f"Started {client_file}")
-    # #run_command(["python", f"{client_file}"], args,'Failed to run rmacs_client_fsm file')
-    # logger.info(f"Starting {client_file} from {client_script_path}")
-    #run_command(["python", client_script_path], args, 'Failed to run rmacs_client_fsm.py')
-    logger.info(f"Starting rmacs client..........")
     try:
         # Start or restart the service using systemctl
         run_command(["rmacs_client"],args,
@@ -149,8 +121,7 @@ def check_radio_interface(config, primary_radio):
             logger.warning(f'Radio interface:[{interface}] is not up')
 
 def main(): 
-    # Start rmacs-related scripts  
-    logger.info('RMACS Manager thread is started....')
+    logger.info('RMACS Manager started....')
     # Create the configuration
     create_rmacs_config()
     config = load_config(config_file_path)
