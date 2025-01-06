@@ -488,7 +488,7 @@ class RMACSServer:
         logger.info(" RMACS Server receive msg is started.........")
         
         # set to store the unique IDs of processed messages
-        # self.processed_ids = set()
+        self.processed_ids = set()
         current_received_bcqi_alert = 0
         last_received_bcqi_alert = 0
         thread_id = threading.get_native_id()
