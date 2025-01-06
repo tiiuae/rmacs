@@ -65,10 +65,9 @@ def send_data(socket, data, interface) -> None:
         # Create the JSON message
         payload = data
         message = create_json_message(msg_type="COMMAND", payload=payload)
-        logger.info(f"Debug*** : socket = {socket} ")
         if socket:
             socket.sendto(message.encode('utf-8'), (MULTICAST_GROUP, MULTICAST_PORT))  
-            logger.info(f"*Sent report to Mutlicast")
+            logger.info(f"Sent report to Mutlicast")
         else:
             logger.info(f"Debug : No socket connection for interface :{interface}")
             
@@ -76,7 +75,6 @@ def send_data(socket, data, interface) -> None:
     except BrokenPipeError:
         logger.info(f"Broken pipe error")
     except Exception as e:
-        logger.info(f"*Error in sending data : {e}")
-        logger.info(f"Error sending data : {e}")
+        logger.info(f"Error in sending data : {e}")
 
         

@@ -517,8 +517,9 @@ class RMACSServer:
                 try:
                     #unpacked_data = msgpack.unpackb(data, raw=False)
                     
-                    message_id: str = parsed_message.get("message_id")
-                    logger.info(f"Recevied msg id : {message_id}")
+                    #message_id: str = parsed_message.get("message_id")
+                    message_id = parsed_message.get("payload", {}).get("message_id")
+                    logger.info(f"+Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.info(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
