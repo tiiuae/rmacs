@@ -488,7 +488,7 @@ class RMACSServer:
         logger.info(" RMACS Server receive msg is started.........")
         
         # set to store the unique IDs of processed messages
-        self.processed_ids = set()
+        #self.processed_ids = set()
         current_received_bcqi_alert = 0
         last_received_bcqi_alert = 0
         thread_id = threading.get_native_id()
@@ -518,6 +518,7 @@ class RMACSServer:
                     #unpacked_data = msgpack.unpackb(data, raw=False)
                     
                     message_id: str = parsed_message.get("message_id")
+                    logger.info(f"Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.info(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
