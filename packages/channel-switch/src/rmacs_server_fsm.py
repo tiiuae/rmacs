@@ -257,12 +257,15 @@ class RMACSServer:
                      
     def update_channel_quality_report(self, message) -> None:
         logger.info("Updating channel report..... ")
-        self.freq = message['freq']
-        self.quality_index = message['qual']
-        self.device_id = message['device']
-        self.phy_error = message['phy_error']
-        self.tx_rate = message['tx_rate']
-        self.tx_timeout = message['tx_timeout']
+        try:
+            self.freq = message.get("payload", {}).get("freq")
+            self.quality_index = message.get("payload", {}).get("qual")
+            self.device_id = message.get("payload", {}).get("device")
+            self.phy_error = message.get("payload", {}).get("phy_error")
+            self.tx_rate = message.get("payload", {}).get("tx_rate")
+            self.tx_timeout = message.get("payload", {}).get("tx_timeout")
+        except Exception as e:
+                logger.info(f"Exception in update channel quality report: {e}")
         current_time = time.time()
         logger.info(f'Sender data : tx_rate:{self.tx_rate} phy_error:{self.phy_error} tx_timeoout:{self.tx_timeout}')
         ####### Frequency quality report update +++
