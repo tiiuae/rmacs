@@ -306,7 +306,7 @@ class RMACSServer:
 
         # Update the average quality in the main dictionary
         self.freq_quality_report[freq]['Average_quality'] = average_quality
-        logger.info(f"++++ Channel Quality Avg index for freq {freq} : {average_quality}")
+        logger.info(f"Channel Quality Avg index for freq {freq} : {average_quality}")
         logger.info(f'Channel quality report is {self.freq_quality_report}')
         
     def update_db(self, args) -> None:
@@ -541,17 +541,14 @@ class RMACSServer:
                                     logger.info(f"Received BCQI report for freq:{bcqi_reported_freq} not for current operating freq : {current_operating_freq} via interface : {interface}")
                                     logger.info("Not required to trigger partial frequency hopping")
                                     parsed_message = {}
-                                    data = {}
                                 #self.bad_channel_message = data
 
                             # Channel report received from client
                             elif action_str == "channel_quality_report":
                                 #self.channel_report_message = data
                                 self.channel_report_message = parsed_message
+                                logger.info(f"++The report is {self.channel_report_message}")
                                 parsed_message = {}
-                    logger.info("*****Clearing received msg....")
-                    parsed_message = {}
-                    data = {}
                 except Exception as e:
                     logger.error(f"Error in received message: {e}")
                     continue
