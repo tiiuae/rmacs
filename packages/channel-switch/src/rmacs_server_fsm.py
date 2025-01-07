@@ -540,13 +540,17 @@ class RMACSServer:
                                 else:
                                     logger.info(f"Received BCQI report for freq:{bcqi_reported_freq} not for current operating freq : {current_operating_freq} via interface : {interface}")
                                     logger.info("Not required to trigger partial frequency hopping")
+                                    parsed_message = {}
                                     data = {}
                                 #self.bad_channel_message = data
 
                             # Channel report received from client
                             elif action_str == "channel_quality_report":
-                                self.channel_report_message = data
+                                #self.channel_report_message = data
+                                self.channel_report_message = parsed_message
+                                parsed_message = {}
                     logger.info("*****Clearing received msg....")
+                    parsed_message = {}
                     data = {}
                 except Exception as e:
                     logger.error(f"Error in received message: {e}")
