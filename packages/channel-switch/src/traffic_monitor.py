@@ -29,12 +29,12 @@ class TrafficMonitor:
         self.tx_timeout_wait_time = 2
         # Set the Network interface  
         config = load_config(config_file_path)
-        self.nw_interface = config['RMACS_Config']['nw_interface']
+        self.interface = config['RMACS_Config']['primary_radio']
         self.traffic_threshold =  config['RMACS_Config']['traffic_threshold']
         #Network statistics file 
-        self.tx_bytes_path = f"/sys/class/net/{self.nw_interface}/statistics/tx_bytes"
-        self.tx_error_path = f"/sys/class/net/{self.nw_interface}/statistics/tx_errors"
-        self.fw_stats_path = f"/sys/kernel/debug/ieee80211/phy1/{self.nw_interface}/fw_stats"
+        self.tx_bytes_path = f"/sys/class/net/{self.interface}/statistics/tx_bytes"
+        self.tx_error_path = f"/sys/class/net/{self.interface}/statistics/tx_errors"
+        self.fw_stats_path = f"/sys/kernel/debug/ieee80211/phy1/{self.interface}/fw_stats"
         
         
         '''
@@ -97,7 +97,7 @@ class TrafficMonitor:
     
     def get_phy_error(self) ->int:
         
-        self.command = f"/usr/sbin/ethtool -S {self.nw_interface} | grep -i 'd_rx_phy_err:' | cut -f 2 -d :"
+        self.command = f"/usr/sbin/ethtool -S {self.interface} | grep -i 'd_rx_phy_err:' | cut -f 2 -d :"
         self.prev_phy_error = self.run_command(self.command)
         time.sleep(self.phy_error_wait_time)
         self.cur_phy_error = self.run_command(self.command)
@@ -107,7 +107,7 @@ class TrafficMonitor:
                 
     def get_tx_timeout(self) ->int:
         
-        self.command = f"/usr/sbin/ethtool -S {self.nw_interface} | grep -i 'd_tx_timeout:' | cut -f 2 -d :"
+        self.command = f"/usr/sbin/ethtool -S {self.interface} | grep -i 'd_tx_timeout:' | cut -f 2 -d :"
         self.prev_tx_timeout = self.run_command(self.command)
         time.sleep(self.tx_timeout_wait_time)
         self.cur_tx_timeout = self.run_command(self.command)

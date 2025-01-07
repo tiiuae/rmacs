@@ -1,4 +1,3 @@
-#import msgpack
 import threading
 import time
 import uuid
@@ -6,11 +5,10 @@ import subprocess
 import os
 import sys
 import json
-#from collections import Counter
+
 from enum import auto, Enum
 from typing import List, Tuple, Dict
-#from netstring import encode, decode
-#from itertools import islice
+
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
@@ -107,7 +105,7 @@ class RMACSServer:
         self.fsm = RMACSServerFSM(self)
         #self.args = Config() 
         config = load_config(config_file_path)
-        self.nw_interface = config['RMACS_Config']['nw_interface']
+        self.interface = config['RMACS_Config']['primary_radio']
         self.freq_quality_report = config['RMACS_Config']['freq_quality_report']
         self.seq_limit = config['RMACS_Config']['seq_limit']
         self.hop_interval = config['RMACS_Config']['hop_interval']
@@ -149,8 +147,8 @@ class RMACSServer:
         self.periodic_operating_freq_broadcast = config['RMACS_Config']['periodic_operating_freq_broadcast']
 
         # Internal Attributes
-        self.operating_frequency: int = get_mesh_freq(self.nw_interface)
-        self.mac_address: str = get_mac_address(self.nw_interface)
+        self.operating_frequency: int = get_mesh_freq(self.interface)
+        self.mac_address: str = get_mac_address(self.interface)
         self.switch_freq: int = self.operating_frequency
         self.healing_process_id: str = str(uuid.uuid4())  # Generate a unique ID at the start
         
@@ -248,11 +246,9 @@ class RMACSServer:
         """
         Check for a channel quality report message from any connected client.
         """
-        logger.info("Received channel qaulity report....... let's update..")
         self.msg = self.channel_report_message
         self.update_channel_quality_report(self.msg)
         self.channel_report_message = None
-        logger.info(f'Reset client mesage: {self.channel_report_message}')
         self.fsm.trigger(ServerEvent.CHANNEL_QUALITY_UPDATE_COMPLETE)
                      
     def update_channel_quality_report(self, message) -> None:
@@ -267,18 +263,13 @@ class RMACSServer:
         except Exception as e:
                 logger.info(f"Exception in update channel quality report: {e}")
         current_time = time.time()
-        logger.info(f'Sender data : tx_rate:{self.tx_rate} phy_error:{self.phy_error} tx_timeoout:{self.tx_timeout}')
-        ####### Frequency quality report update +++
-            # Check if the frequency exists; if not, add it
+        # Check if the frequency exists; if not, add it
         if self.freq not in self.freq_quality_report:
             self.freq_quality_report[self.freq] = {'nodes': {}, 'Average_quality': 1}
         # Update the node's quality data
         self.freq_quality_report[self.freq]['nodes'][self.device_id] = {'quality': self.quality_index, 'timestamp':current_time}
         self.update_average_quality(self.freq)
-        #self.freq_quality_report.update({self.freq: self.quality_index})
-        ####### Frequency quality report update --- 
         logger.info(f"Updated Channel Quality Report: {self.freq_quality_report}")
-        self.update_db(('rf_signals',self.freq,0,0,0,self.quality_index))
         
     def update_average_quality(self, freq):
         """
@@ -311,37 +302,7 @@ class RMACSServer:
         self.freq_quality_report[freq]['Average_quality'] = average_quality
         logger.info(f"Channel Quality Avg index for freq {freq} : {average_quality}")
         logger.info(f'Channel quality report is {self.freq_quality_report}')
-        
-    def update_db(self, args) -> None:
-        if self.update_flag:
-            if args[0] == 'rf_signals':
-               cur_freq  = get_mesh_freq(self.nw_interface)
-               label = 0
-               if (cur_freq == args[1]):
-                  label = args[5]
-               formatted_strings = [f"{s}" for s in args]
-               # Join the formatted strings with a space separator
-               result = ' '.join(formatted_strings)
-               run_cmd = f"python /root/send_data2.py {result} {label}"
-            else:
-                formatted_strings = [f"{s}" for s in args]
-                # Join the formatted strings with a space separator
-                result = ' '.join(formatted_strings)
-                run_cmd = f"python /root/send_data2.py {result}"
-            print(run_cmd)
-            try:
-                result = subprocess.run(run_cmd, 
-                                    shell=True, 
-                                    capture_output=True, 
-                                    text=True)
-                if(result.returncode != 0):
-                    logger.info(f"Failed to execute the command: {run_cmd}")
-                    return None
-
-            except subprocess.CalledProcessError as e:
-                logger.info(f"Error: {e}")
-                return None    
- 
+    
 
     def broadcast_operating_freq(self, trigger_event) -> None:
         """
@@ -351,7 +312,7 @@ class RMACSServer:
         """
         try:
             action_id: int = action_to_id["operating_frequency"]
-            freq = get_mesh_freq(self.nw_interface)
+            freq = get_mesh_freq(self.interface)
             message_id: str = str(uuid.uuid4())  
             operating_freq_data = {'a_id': action_id, 'freq': freq, 'message_id': message_id, 'device': self.mac_address }
             logger.info(f"Brodcasting operating freq : {operating_freq_data}")
@@ -384,7 +345,6 @@ class RMACSServer:
             if (self.fsm.state == ServerState.PARTIAL_FREQUENCY_HOPPING):
               
                 if self.top_freq_stability_counter < self.stability_threshold:
-                    self.update_db(('pfh_monitor','1'))
                     # Continue hopping between the best frequencies
                     self.switch_freq = self.sorted_frequencies[self.pfh_index][0]
                     logger.info(f"Executing partial frequency hopping, stability count: {self.top_freq_stability_counter}")
@@ -420,23 +380,21 @@ class RMACSServer:
                         #self.top_freq = 0
                     
                     logger.info(f"The next switch frequency: {self.switch_freq}")
-                    result = self.switch_frequency(self.switch_freq, self.nw_interface, self.channel_bandwidth, self.beacon_count)
+                    result = self.switch_frequency(self.switch_freq, self.interface, self.channel_bandwidth, self.beacon_count)
                     if result:
                         logger.info("Waiting for CSA to be established")
                         time.sleep(self.beacon_count + self.buffer_period)
-                    if get_mesh_freq(self.nw_interface) == self.switch_freq:
-                       logger.info(f" CSA is successfull, Node switched to new operating freq : {get_mesh_freq(self.nw_interface)}")
-                       self.update_db(('rf_signals',self.switch_freq,0,0,0,self.freq_quality_report.get(self.switch_freq)))
+                    if get_mesh_freq(self.interface) == self.switch_freq:
+                       logger.info(f" CSA is successfull, Node switched to new operating freq : {get_mesh_freq(self.interface)}")
                        # Wait for the current hop interval before switching to the next frequency
                        #time.sleep(self.hop_interval)
                     else:
-                       logger.info(f" CSA is not successfull, current operating freq : {get_mesh_freq(self.nw_interface)}")
+                       logger.info(f" CSA is not successfull, current operating freq : {get_mesh_freq(self.interface)}")
                     self.fsm.trigger(ServerEvent.CHANNEL_SWITCH_REQUEST)
 
                 if self.top_freq_stability_counter >= self.stability_threshold:
                     logger.info(f"Completed partial frequency hopping: count: {self.top_freq_stability_counter}")
                     self.top_freq_stability_counter = 0
-                    self.update_db(('pfh_monitor','0'))
                     self.fsm.trigger(ServerEvent.FREQUENCY_HOPPING_COMPLETE)
                 
         except Exception as e:
@@ -527,7 +485,7 @@ class RMACSServer:
                                 device_id = parsed_message.get("payload", {}).get("device")
                                 bcqi_reported_freq = parsed_message.get("payload", {}).get("freq")
                                 channel_quality_index = parsed_message.get("payload", {}).get("qual")
-                                current_operating_freq = get_mesh_freq(self.nw_interface)
+                                current_operating_freq = get_mesh_freq(self.interface)
                                 logger.info(f"Received BCQI report for freq :{bcqi_reported_freq} of channel quality index : {channel_quality_index} from device : {device_id} via interface : {interface}")
                                 if current_operating_freq == bcqi_reported_freq:
                                     if (current_received_bcqi_alert - last_received_bcqi_alert) > self.bcqi_threshold_time:

@@ -15,7 +15,6 @@ default_config = {
         "osf_interface": "osf0",
         "nw_interface": "wlp1s0",
         "halow_interface": "morse1",
-        "phy_interface": "phy1",
         "driver": "ath9k",
         "bridge_interface": "br-lan",
         "addr_prefix": "fdd8",

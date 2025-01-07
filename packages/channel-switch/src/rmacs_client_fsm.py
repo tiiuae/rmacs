@@ -191,7 +191,7 @@ class InterferenceDetection(threading.Thread):
         self.traffic_monitor = TrafficMonitor()
         self.channel_bandwidth = config['RMACS_Config']['channel_bandwidth']
         self.client_beacon_count = config['RMACS_Config']['client_beacon_count']
-        self.nw_interface = config['RMACS_Config']['nw_interface']
+        self.interface = config['RMACS_Config']['primary_radio']
         self.switching_frequency = config['RMACS_Config']['starting_frequency']
         self.freq_list = config['RMACS_Config']['freq_list']
         # Control channel interfaces
@@ -212,7 +212,7 @@ class InterferenceDetection(threading.Thread):
         self.tx_timeout_limit = config['RMACS_Config']['tx_timeout_limit']
         
         # Device MAC address
-        self.mac_address = get_mac_address(self.nw_interface)
+        self.mac_address = get_mac_address(self.interface)
         
         # 
         self.phy_error = 0   
@@ -280,25 +280,6 @@ class InterferenceDetection(threading.Thread):
             except Exception as e:
                 logger.info(f"+Exception in run: {e}")
                 return None
-               
-    def update_db(self, args) -> None:
-        
-        formatted_strings = [f"{s}" for s in args]
-        # Join the formatted strings with a space separator
-        result = ' '.join(formatted_strings)
-        run_cmd = f"python /root/send_data2.py {result}"
-        try:
-            result = subprocess.run(run_cmd, 
-                                shell=True, 
-                                capture_output=True, 
-                                text=True)
-            if(result.returncode != 0):
-                logger.info(f"Failed to execute the command: {run_cmd}")
-                return None
-
-        except subprocess.CalledProcessError as e:
-            logger.info(f"Error: {e}")
-            return None
                     
     def receive_messages(self, socket, interface) -> None:
         """
@@ -345,7 +326,7 @@ class InterferenceDetection(threading.Thread):
                             if action_str in ["switch_frequency", "operating_frequency"]:
                                 requested_switch_freq = parsed_message.get("payload", {}).get("freq")
                                 self.update_operating_freq(requested_switch_freq)
-                                cur_freq = get_mesh_freq(self.nw_interface)
+                                cur_freq = get_mesh_freq(self.interface)
                                 logger.info(f"The requested switch freq: {requested_switch_freq} and current operating freq: {cur_freq} via interface : {interface}")
                                 if cur_freq != self.operating_frequency:
                                     self.switching_frequency = requested_switch_freq
@@ -364,7 +345,7 @@ class InterferenceDetection(threading.Thread):
 
         :param trigger_event: ClientEvent that triggered the execution of this function.
         """
-        curr_freq: int = get_mesh_freq(self.nw_interface)
+        curr_freq: int = get_mesh_freq(self.interface)
         action_id: int = action_to_id["bad_channel_quality_index"]
         message_id: str = str(uuid.uuid4())  
         data = {'a_id': action_id,'message_id': message_id,
@@ -377,7 +358,6 @@ class InterferenceDetection(threading.Thread):
             for interface, socket in self.sockets.items():
                 self.send_to_socket(socket, data, interface)
             repeat -= 1                  
-        self.update_db(("bcqi_monitor", curr_freq))
         self.fsm.trigger(ClientEvent.SENT_BAD_CHANNEL_QUALITY_INDEX)
        
     def send_to_socket(self, socket, data, interface):
@@ -409,13 +389,13 @@ class InterferenceDetection(threading.Thread):
     def switch_frequency(self, trigger_event) -> None:
           
         self.fsm.state = ClientState.CHANNEL_SWITCH
-        cur_freq = get_mesh_freq(self.nw_interface)
+        cur_freq = get_mesh_freq(self.interface)
         logger.info(f"The current operating frequency is {cur_freq} and requested switch frequency is {self.switching_frequency}")
         if cur_freq == self.switching_frequency:
             logger.info(f"Mesh node is currently operating at requested switch frequency:{cur_freq} already")
             self.fsm.trigger(ClientEvent.SWITCH_NOT_REQUIRED)
             return None 
-        run_cmd = f"iw dev {self.nw_interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
+        run_cmd = f"iw dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
         logger.info(f"run_cmd : {run_cmd}")
         try:
             result = subprocess.run(run_cmd, 
@@ -428,7 +408,7 @@ class InterferenceDetection(threading.Thread):
             else:
                 logger.info(f"Executed switch freq cmd successfully : ")
                 time.sleep(self.client_beacon_count)
-                cur_freq = get_mesh_freq(self.nw_interface)
+                cur_freq = get_mesh_freq(self.interface)
                # logger.info(f"After successful frequency switch  {cur_freq}")
         
              # If maximum frequency switch retries not reached, try to switch again
@@ -482,7 +462,7 @@ class InterferenceDetection(threading.Thread):
             
             
         elif self.fsm.state == ClientState.OPERATING_CHANNEL_SCAN:
-            self.scan_freq = get_mesh_freq(self.nw_interface)
+            self.scan_freq = get_mesh_freq(self.interface)
             self.channel_report = self.perform_scan(self.scan_freq)
             self.channel_quality_index = self.channel_quality_estimator(self.channel_report)
             if self.channel_quality_index > self.channel_quality_index_threshold:

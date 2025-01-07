@@ -20,10 +20,9 @@ class Spectral_Scan:
     def __init__(self):
         self.VALUES = dict()
         config = load_config(config_file_path)
-        #self.phy_interface = config['RMACS_Config']['phy_interface']
-        self.nw_interface = config['RMACS_Config']['nw_interface']
-        self.is_interface_up = get_interface_operstate(self.nw_interface)
-        self.phy_interface = get_phy_interface(self.nw_interface)
+        self.interface = config['RMACS_Config']['primary_radio']
+        self.is_interface_up = get_interface_operstate(self.interface)
+        self.phy_interface = get_phy_interface(self.interface)
         self.driver = config['RMACS_Config']['driver']
         self.bin_file = config['RMACS_Config']['bin_file']
         logger.info(" Spectral scan init method called............")
@@ -70,7 +69,7 @@ class Spectral_Scan:
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan
-            scan_cmd = ["iw", "dev", f"{self.nw_interface}", "scan", "freq", f"{freq}", "5200", "flush"]
+            scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", "5200", "flush"]
             logger.info(f"scan cmd : {scan_cmd}")
             try: 
                 subprocess.call(scan_cmd, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.DEVNULL)
