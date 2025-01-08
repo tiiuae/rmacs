@@ -1,15 +1,9 @@
 #!/usr/bin/python
-import math
-import os
-import struct
 import subprocess
-import sys
-import time
 from typing import BinaryIO
 import json
 import re
 
-#import pandas as pd
 
 from config import load_config
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
@@ -23,6 +17,7 @@ class Spectral_Scan:
         self.interface = config['RMACS_Config']['primary_radio']
         self.is_interface_up = get_interface_operstate(self.interface)
         self.phy_interface = get_phy_interface(self.interface)
+        self.channel_bw = get_channel_bw(self.interface)
         self.driver = config['RMACS_Config']['driver']
         self.bin_file = config['RMACS_Config']['bin_file']
         logger.info(" Spectral scan init method called............")
@@ -69,7 +64,11 @@ class Spectral_Scan:
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan
-            scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", "5200", "flush"]
+            cur_freq = get_mesh_freq(self.interface) 
+            if (self.channel_bw == 40 and (cur_freq != freq)):
+                scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", f"{cur_freq}", "flush"]
+            else:
+                scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", "flush"]
             logger.info(f"scan cmd : {scan_cmd}")
             try: 
                 subprocess.call(scan_cmd, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.DEVNULL)
