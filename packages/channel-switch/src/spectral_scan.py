@@ -60,12 +60,12 @@ class Spectral_Scan:
         */
         """
         
-        logger.info(" execute scan method called............")
+        logger.info("Execute scan method called............")
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan
             cur_freq = get_mesh_freq(self.interface) 
-            if (self.channel_bw == 40 and (cur_freq != freq)):
+            if self.channel_bw == 40 and (cur_freq != freq):
                 scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", f"{cur_freq}", "flush"]
             else:
                 scan_cmd = ["iw", "dev", f"{self.interface}", "scan", "freq", f"{freq}", "flush"]
@@ -91,6 +91,7 @@ class Spectral_Scan:
         try:
             with open(self.bin_file, "wb") as output_file:
                 subprocess.call(cmd_dump, stdout=output_file, stderr=subprocess.PIPE, shell=False)
+                logger.info("+++ Debug : I'm inisde execute scan .....")
         except subprocess.CalledProcessError as e:
             logger.info(f"Error: {e}")
             
@@ -98,6 +99,7 @@ class Spectral_Scan:
 
         try:
             # Run the subprocess command
+            logger.info("+++ Debug : I'm inisde run_fft_eval.....")
             result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             # Check return code and handle output
@@ -107,7 +109,7 @@ class Spectral_Scan:
                 logger.info(f"Channel Quality Report : {output}")
                 return output
             else:
-                logger.info(f"Command failed with return code {result.returncode}. Error:", result.stderr)
+                logger.info(f"Command failed with return code: {result.returncode}. Error: {result.stderr}")
                 return [{"error": result.stderr}]
 
         except FileNotFoundError as e:
