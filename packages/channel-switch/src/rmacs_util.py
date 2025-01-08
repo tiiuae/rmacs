@@ -101,7 +101,11 @@ def get_channel_bw(interface) -> int:
         return None
     
 def channel_switch_announcement(frequency: int, interface: str, bandwidth: int, beacons_count: int ) -> None:
-    run_cmd = f"iw dev {interface} switch freq {frequency} {bandwidth}MHz beacons {beacons_count}"
+    if bandwidth in {5,10,80}:
+        run_cmd = f"iw dev {interface} switch freq {frequency} {bandwidth}MHz beacons {beacons_count}"
+    else:
+        run_cmd = f"iw dev {interface} switch freq {frequency} HT{bandwidth}+ beacons {beacons_count}"
+        
     try:
         result = subprocess.run(run_cmd, 
                             shell=True, 
