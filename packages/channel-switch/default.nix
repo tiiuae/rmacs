@@ -23,7 +23,6 @@
     environment.systemPackages = [
       pkgs.python3
       pkgs.wpa_supplicant
-      pkgs.ss-analyser
       (pkgs.python3Packages.buildPythonApplication {
         pname = "channel-switch";
         version = "1.0.0";
