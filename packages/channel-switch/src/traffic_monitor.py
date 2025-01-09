@@ -5,7 +5,7 @@ import sys
 import re
 
 from logging_config import logger
-
+from rmacs_util import get_mesh_freq
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
    sys.path.append(parent_directory)
@@ -119,7 +119,10 @@ class TrafficMonitor:
             return self.cur_tx_timeout - self.prev_tx_timeout
         
     def get_air_time(self) -> int:
-        self.command = f"iw {self.interface} survey dump | grep -E 'channel active time|channel busy time'"
+        self.mesh_freq = get_mesh_freq(self.interface)
+        self.command = f"iw {self.interface} survey dump | grep -A 2 {self.mesh_freq}| grep -E 'channel active time|channel busy time'"
+        #iw dev wlp3s0 survey dump | grep -A 2 '2412' | grep -E 'channel active time|channel busy time'
+
         self.prev_value = self.run_command(self.command)
         time.sleep(self.tx_timeout_wait_time)
         self.cur_value = self.run_command(self.command)
@@ -147,7 +150,8 @@ class TrafficMonitor:
         logger.info("--------------------------------------------")
         logger.info(f"Active Time Delta: {act_time_delta} ms")
         logger.info(f"Busy Time Delta: {bsy_time_delta} ms")
-        logger.info(f"Air Time: {air_time:.3f}%")
+        logger.info(f"Air Time: {air_time}")
+        #logger.info(f"Air Time: {air_time:.3f}%")
         logger.info("--------------------------------------------")
         return air_time        
 
