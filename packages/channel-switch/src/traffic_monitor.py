@@ -2,6 +2,9 @@ import os
 import time
 import subprocess
 import sys
+import re
+
+from logging_config import logger
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
@@ -57,12 +60,12 @@ class TrafficMonitor:
         self.cur_tx_bytes = self.read_sysfs_file(self.tx_bytes_path)
         if self.prev_tx_bytes is not None and self.cur_tx_bytes is not None: 
             self.traffic = ((self.cur_tx_bytes - self.prev_tx_bytes) * 8)/ (self.tx_rate_wait_time * 1000) #kbps 
-            print(f"Traffic : {self.traffic}")
+            logger.info(f"Traffic : {self.traffic}")
             if self.traffic > self.traffic_threshold:
-                print(f"Current Traffic: {self.traffic} in Kbps above threshold traffic : {self.traffic_threshold} in Kbps")
+                logger.info(f"Current Traffic: {self.traffic} in Kbps above threshold traffic : {self.traffic_threshold} in Kbps")
                 return self.traffic
             else:
-                print(f"There is no traffic, let's go for channel scan......")
+                logger.info(f"There is no traffic, let's go for channel scan......")
                 return 0
         else:
             return 0
@@ -76,7 +79,7 @@ class TrafficMonitor:
         int : Return the network traffic error in bytes
         '''
         self.tx_error = self.read_sysfs_file(self.tx_error_path)
-        print(f"The traffic error is : {self.tx_error}")
+        logger.info(f"The traffic error is : {self.tx_error}")
         return self.tx_error
     
     def get_traffic_status(self) -> int:
@@ -92,7 +95,7 @@ class TrafficMonitor:
             self.cur_tx_bytes = self.read_sysfs_file(self.tx_bytes_path) 
             # Convert tx_bytes value in bytes to Kilobits [Kilobits = Bytes * 8 / 1000]
         self.traffic_in_kbps = ((self.cur_tx_bytes - self.prev_tx_bytes) * 8)/ (self.tx_rate_wait_time * 1000) #kbps 
-        print(f"Traffic : {self.traffic_in_kbps}")
+        logger.info(f"Traffic : {self.traffic_in_kbps}")
         return self.traffic_in_kbps
     
     def get_phy_error(self) ->int:
@@ -102,7 +105,7 @@ class TrafficMonitor:
         time.sleep(self.phy_error_wait_time)
         self.cur_phy_error = self.run_command(self.command)
         if self.prev_phy_error is not None and self.cur_phy_error is not None:
-            print(f"phy_error: {self.cur_phy_error - self.prev_phy_error}")
+            logger.info(f"phy_error: {self.cur_phy_error - self.prev_phy_error}")
             return self.cur_phy_error - self.prev_phy_error
                 
     def get_tx_timeout(self) ->int:
@@ -112,8 +115,54 @@ class TrafficMonitor:
         time.sleep(self.tx_timeout_wait_time)
         self.cur_tx_timeout = self.run_command(self.command)
         if self.prev_tx_timeout is not None and self.cur_tx_timeout is not None:
-            print(f"tx_timeout: {self.cur_tx_timeout - self.prev_tx_timeout}")
+            logger.info(f"tx_timeout: {self.cur_tx_timeout - self.prev_tx_timeout}")
             return self.cur_tx_timeout - self.prev_tx_timeout
+        
+    def get_air_time(self) -> int:
+        self.command = f"iw {self.interface} survey dump | grep -E 'channel active time|channel busy time'"
+        self.prev_value = self.run_command(self.command)
+        time.sleep(self.tx_timeout_wait_time)
+        self.cur_value = self.run_command(self.command)
+        act_time_1, bsy_time_1 = self.parse_air_time(self.prev_value)
+        act_time_2, bsy_time_2 = self.parse_air_time(self.cur_value)
+        
+        # Check for missing values
+        if None in (act_time_1, bsy_time_1, act_time_2, bsy_time_2):
+            logger.info("Error: One or more RF parameters are missing.")
+            return
+
+        # Calculate the differences
+        act_time_delta = act_time_2 - act_time_1
+        bsy_time_delta = bsy_time_2 - bsy_time_1
+
+        # Check for zero active time delta to avoid division by zero
+        if act_time_delta == 0:
+            logger.info("Error: Active time delta is zero. Cannot calculate air time.")
+            return
+
+        # Calculate air time percentage
+        air_time = (bsy_time_delta / act_time_delta) * 100
+
+        # Display the results
+        logger.info("--------------------------------------------")
+        logger.info(f"Active Time Delta: {act_time_delta} ms")
+        logger.info(f"Busy Time Delta: {bsy_time_delta} ms")
+        logger.info(f"Air Time: {air_time:.3f}%")
+        logger.info("--------------------------------------------")
+        return air_time        
+
+    def parse_air_time(rf_params):
+ 
+        active_time = None
+        busy_time = None
+
+        for line in rf_params.splitlines():
+            if 'channel active time' in line:
+                active_time = int(re.search(r"\d+", line).group())
+            elif 'channel busy time' in line:
+                busy_time = int(re.search(r"\d+", line).group())
+
+        return active_time, busy_time
     
     def run_command(self, command: str) -> int:
         try:
@@ -122,17 +171,17 @@ class TrafficMonitor:
                 output  = result.stdout.strip()
                 return int(output)
             else:
-                print(f"Command failed with return code {result.returncode}. Error:", result.stderr)
+                logger.info(f"Command failed with return code {result.returncode}. Error:", result.stderr)
                 return None
     
         except FileNotFoundError as e:
-            print(f"Command not found: {e}")
+            logger.info(f"Command not found: {e}")
             return None
         except subprocess.SubprocessError as e:
-            print(f"Subprocess error: {e}")
+            logger.info(f"Subprocess error: {e}")
             return None
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            logger.info(f"An unexpected error occurred: {e}")
             return None
             
     
@@ -152,11 +201,11 @@ class TrafficMonitor:
         
         
 def main():
-    print('Main called ..........')
+    logger.info('Main called ..........')
     obj = TrafficMonitor()
     phy_error = obj.get_phy_error()
     tx_timeout = obj.get_tx_timeout()
-    print(f"phy error : {phy_error}, tx_timeout = {tx_timeout}")
+    logger.info(f"phy error : {phy_error}, tx_timeout = {tx_timeout}")
     pass
 
 if __name__ == "__main__":
