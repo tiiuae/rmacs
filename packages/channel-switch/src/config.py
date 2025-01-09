@@ -53,7 +53,7 @@ default_config = {
         "periodic_recovery_switch": 3.0,
         "periodic_operating_freq_broadcast": 15.0,
         "log_file": "/var/log/rmacs.log",
-        "bin_file": "/root/sample.bin",
+        "bin_file": "/home/scmd/sample.bin",
     }
 }
 def merge_dicts(default, user):
