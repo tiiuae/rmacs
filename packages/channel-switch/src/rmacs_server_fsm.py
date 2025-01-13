@@ -546,18 +546,18 @@ def main():
     try:
         server = RMACSServer()
         server.start()
-        logger.info("RMACS server is running...")
+        logger.info("**RMACS server is running...")
 
     except Exception as e:
         logger.error(f"Unexpected error in the server: {e}")
         if server:
             server.stop()
 
-    finally:
-        if server and server.running:
-            logger.info("Ensuring rmacs server stops gracefully.")
-            server.stop()
-        logger.info("Exiting the RMACS server.")
+    # finally:
+        # if server and server.running:
+            # logger.info("Ensuring rmacs server stops gracefully.")
+            # server.stop()
+        # logger.info("Exiting the RMACS server.")
 
 if __name__ == "__main__":
     main()
