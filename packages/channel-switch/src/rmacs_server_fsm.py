@@ -446,10 +446,9 @@ class RMACSServer:
         """
         Handles incoming messages from the client.
         """
-        logger.info(" RMACS Server receive msg is started.........")
+        logger.info("RMACS server receive msg is started.........")
         current_received_bcqi_alert = 0
         last_received_bcqi_alert = 0
-        thread_id = threading.get_native_id()
         while self.running:
             try:
                 # Receive incoming messages and decode the netstring encoded data
@@ -469,15 +468,14 @@ class RMACSServer:
                     message_id = parsed_message.get("payload", {}).get("message_id")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
-                            logger.debug(f"{thread_id}: Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
+                            logger.debug(f"Duplicate Msg: Message with ID {message_id} has already been processed and was received via interface : {interface}. Ignoring.")
                         else:
-                            logger.debug(f"{thread_id}: New Msg: Processing Message with ID : {message_id} via interface : {interface}")
+                            logger.debug(f"New Msg: Processing Message with ID : {message_id} via interface : {interface}")
                             device_id: str = parsed_message.get("payload", {}).get("device")
                             # Add the unique ID to the processed set
                             self.processed_ids.add(message_id)
                             action_id: int = parsed_message.get("payload", {}).get("a_id")
                             action_str: str = id_to_action.get(action_id)
-                            #logger.info(f"Received message: {data}")
     
                             # Bad channel quality index received from client
                             if action_str == "bad_channel_quality_index":
@@ -508,7 +506,10 @@ class RMACSServer:
                             elif action_str == "channel_quality_report":
                                 #self.channel_report_message = data
                                 self.channel_report_message = parsed_message
-                                logger.info(f"++The report is {self.channel_report_message}")
+                                if not self.channel_report_message:
+                                    logger.info("Channel quality is empty.")
+                                else:
+                                    logger.info(f"The report is {self.channel_report_message}")
                                 parsed_message = {}
                 except Exception as e:
                     logger.error(f"Error in received message: {e}")

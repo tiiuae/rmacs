@@ -28,7 +28,7 @@ class Spectral_Scan:
         Initialize spectral scan.
         """
         logger.info("Initialize method called............")
-        if self.driver == "ath9k":
+        if self.driver in ("ath9k", "ath10K"):
             output_file = f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan_ctl"
             logger.info(f"output file : {output_file}")
 
@@ -91,7 +91,6 @@ class Spectral_Scan:
         try:
             with open(self.bin_file, "wb") as output_file:
                 subprocess.call(cmd_dump, stdout=output_file, stderr=subprocess.PIPE, shell=False)
-                logger.info("+++ Debug : I'm inisde execute scan .....")
         except subprocess.CalledProcessError as e:
             logger.info(f"Error: {e}")
             
@@ -99,7 +98,6 @@ class Spectral_Scan:
 
         try:
             # Run the subprocess command
-            logger.info("+++ Debug : I'm inisde run_fft_eval.....")
             result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             # Check return code and handle output

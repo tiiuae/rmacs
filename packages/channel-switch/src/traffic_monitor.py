@@ -121,7 +121,6 @@ class TrafficMonitor:
     def get_air_time(self) -> int:
         self.mesh_freq = get_mesh_freq(self.interface)
         self.command = f"iw {self.interface} survey dump | grep -A 2 {self.mesh_freq}| grep -E 'channel active time|channel busy time'"
-        #iw dev wlp3s0 survey dump | grep -A 2 '2412' | grep -E 'channel active time|channel busy time'
 
         self.prev_value = self.run_command(self.command)
         time.sleep(self.tx_timeout_wait_time)
@@ -140,19 +139,15 @@ class TrafficMonitor:
 
         # Check for zero active time delta to avoid division by zero
         if act_time_delta == 0:
-            logger.info("Error: Active time delta is zero. Cannot calculate air time.")
+            logger.info("Active time delta is zero. Cannot calculate air time.")
             return
 
         # Calculate air time percentage
         air_time = (bsy_time_delta / act_time_delta) * 100
 
-        # Display the results
-        logger.info("--------------------------------------------")
-        logger.info(f"Active Time Delta: {act_time_delta} ms")
-        logger.info(f"Busy Time Delta: {bsy_time_delta} ms")
+        logger.debug(f"Active Time Delta: {act_time_delta} ms")
+        logger.debug(f"Busy Time Delta: {bsy_time_delta} ms")
         logger.info(f"Air Time: {air_time}")
-        #logger.info(f"Air Time: {air_time:.3f}%")
-        logger.info("--------------------------------------------")
         return air_time        
 
     def parse_air_time(rf_params):
@@ -203,7 +198,7 @@ class TrafficMonitor:
         else:
             raise FileNotFoundError(f"{syspath} does not exist.")
         
-        
+'''      
 def main():
     logger.info('Main called ..........')
     obj = TrafficMonitor()
@@ -214,6 +209,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+'''
         
     
     

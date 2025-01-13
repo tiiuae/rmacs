@@ -210,6 +210,7 @@ class InterferenceDetection(threading.Thread):
         # Error Monitoring threshold
         self.phy_error_limit = config['RMACS_Config']['phy_error_limit']
         self.tx_timeout_limit = config['RMACS_Config']['tx_timeout_limit']
+        self.air_time_limit = config['RMACS_Config']['air_time_limit']
         
         # Device MAC address
         self.mac_address = get_mac_address(self.interface)
@@ -477,9 +478,19 @@ class InterferenceDetection(threading.Thread):
             
             
     def perform_scan(self, freq: str) -> list[dict]:
-        self.scan.initialize_scan()
-        self.scan.execute_scan(self.scan_freq)
-        self.channel_quality:list[dict] = self.scan.run_fft_eval(self.scan_freq)
+        try:
+            self.scan.initialize_scan()
+            self.scan.execute_scan(self.scan_freq)
+            self.channel_quality:list[dict] = self.scan.run_fft_eval(self.scan_freq)
+        except ValueError as e:
+            logger.info(f"ValueError: {e}")
+            return []
+        except Exception as e:
+            logger.info(f"An unexpected error occurred: {e}")
+            return []
+        if not self.channel_quality:
+            logger.info("Channel quality is empty.")
+            return []
         return self.channel_quality
         
         
@@ -519,7 +530,8 @@ class InterferenceDetection(threading.Thread):
                     logger.info(f'Traffic error observed for {self.error_check_count} items')
                     self.phy_error = self.traffic_monitor.get_phy_error()
                     self.tx_timeout = self.traffic_monitor.get_tx_timeout()
-                    if self.phy_error > self.phy_error_limit or self.tx_timeout > self.tx_timeout_limit:
+                    self.air_time = self.traffic_monitor.get_air_time()
+                    if self.phy_error > self.phy_error_limit or self.tx_timeout > self.tx_timeout_limit or self.air_time > self.air_time_limit:
                         self.error_check_count +=1
                         logger.info(f"Observed error in on-going traffic : count = {self.error_check_count}")
                         continue

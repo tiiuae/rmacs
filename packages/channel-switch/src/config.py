@@ -27,6 +27,7 @@ default_config = {
         "traffic_threshold": 2500,
         "phy_error_limit": 1500,
         "tx_timeout_limit": 1,
+        "air_time": 20,
         "monitoring_sleep_time": 30,
         "max_error_check": 4,
         "cooldown_period": 30,
