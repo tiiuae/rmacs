@@ -27,7 +27,6 @@ def start_server(args) -> None:
         # Start or restart the service using systemctl
         run_command(["rmacs_server"],args,
             "Failed to start rmacs_server service")
-        logger.info("RMACS server service started successfully.")
     except Exception as e:
         logger.error(f"Failed to start rmacs_server service: {e}")
         raise
@@ -44,7 +43,6 @@ def start_client(args) -> None:
         # Start or restart the service using systemctl
         run_command(["rmacs_client"],args,
             "Failed to start rmacs_client service")
-        logger.info("RMACS client service started successfully.")
     except Exception as e:
         logger.error(f"Failed to start rmacs_client service: {e}")
         raise

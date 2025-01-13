@@ -266,7 +266,6 @@ def create_json_message(msg_type, payload=None, status_code=0):
 
     # Add optional payload if provided
     if payload:
-        logger.info(f"*payload : {payload}, msg_type : {msg_type}")
         message["payload"] = payload
 
     # Convert the message dictionary to a JSON string

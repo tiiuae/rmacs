@@ -77,7 +77,7 @@ class RMACSServerFSM:
 
     def trigger(self, event) -> None:
         """Function to handle state transitions"""
-        logger.info(f" Trigger event arrived {event}")
+        logger.debug(f" Trigger event arrived {event}")
         self._process_event(event)
 
     def _process_event(self, event) -> None:
@@ -89,7 +89,7 @@ class RMACSServerFSM:
             self.state = next_state
             if action:
                 action(event)
-                logger.info(f'process event : {action}')
+                logger.debug(f'process event : {action}')
         else:
             logger.info(f"No transition found for event '{event}' in state '{self.state}'")
 
@@ -190,22 +190,6 @@ class RMACSServer:
             logger.error(f"Unexpected error while starting server: {e}")
             self.stop()
             
-    def stop(self) -> None:
-        """
-        Stop the server by closing the server socket and server fsm thread.
-        """
-        self.running = False
-
-        # Close server socket
-        if self.socket_osf:
-            self.socket_osf.close()
-
-        if self.socket_mr:
-            self.socket_mr.close()
-        # Join Server FSM thread
-        if self.run_server_fsm_thread.is_alive():
-            self.run_server_fsm_thread.join()
-
     def run_server_fsm(self) -> None:
         """
         Run the Server Finite State Machine (FSM) continuously to manage its state transitions and periodic tasks.
@@ -252,7 +236,6 @@ class RMACSServer:
         self.fsm.trigger(ServerEvent.CHANNEL_QUALITY_UPDATE_COMPLETE)
                      
     def update_channel_quality_report(self, message) -> None:
-        logger.info("Updating channel report..... ")
         try:
             self.freq = message.get("payload", {}).get("freq")
             self.quality_index = message.get("payload", {}).get("qual")
@@ -348,7 +331,6 @@ class RMACSServer:
                     # Continue hopping between the best frequencies
                     self.switch_freq = self.sorted_frequencies[self.pfh_index][0]
                     logger.info(f"Executing partial frequency hopping, stability count: {self.top_freq_stability_counter}")
-                    #self.top_freq_stability_counter +=1
 
                     # Move to the next frequency in the list
                     self.pfh_index = (self.pfh_index + 1) % self.seq_limit
@@ -356,9 +338,6 @@ class RMACSServer:
                         # Sort by the second item in the tuple (quality) in ascending order (best quality first)
                         
                         self.sorted_frequencies = sorted(self.freq_quality_report.items(),key=lambda item: item[1]['Average_quality'])
-                        #self.sorted_frequencies = sorted(self.freq_quality_report.items(), key=lambda x: x[1])
-                        # Select the hop frequency sequence from the top x sorted frequencies
-                        #hop_freq_seq = islice(sorted_frequencies,seq_limit)
                         current_top_freq = self.sorted_frequencies[0][0]
                     #logger.info(f" the current top freq : {current_top_freq}")
                     if current_top_freq == self.top_freq:
@@ -375,9 +354,6 @@ class RMACSServer:
                         #self.switch_frequency(self.top_freq)
                         self.operating_frequency = self.top_freq
                         self.switch_freq = self.top_freq
-                        #self.limit = 0
-                        #self.sorted_frequencies = []
-                        #self.top_freq = 0
                     
                     logger.info(f"The next switch frequency: {self.switch_freq}")
                     result = self.switch_frequency(self.switch_freq, self.interface, self.channel_bandwidth, self.beacon_count)
@@ -525,29 +501,63 @@ class RMACSServer:
         """
         self.bad_channel_message = {}
         self.channel_report_message = {}
-
+            
     def stop(self) -> None:
         """
-        Stops all threads and closes the socket connection.
+        Stops all threads, closes all sockets, and cleans up server resources.
         """
-        self.running = False
-        # Close server socket
-        if self.socket_mr:
-            self.socket_mr.close()
-        if self.socket_osf:
-            self.socket_osf.close()
-            # Join listen thread
-        if self.listen_thread_mr.is_alive():
-            self.listen_thread_mr.join()
-        if self.listen_thread_osf.is_alive():
-            self.listen_thread_osf.join()
+        logger.info("Stopping the RMACS server...")
+        try:
+            self.running = False
+
+            if self.run_server_fsm_thread.is_alive():
+                self.run_server_fsm_thread.join()
+                logger.info("RMACS Server FSM thread stopped.")
+
+            for interface, socket in self.sockets.items():
+                try:
+                    socket.close()
+                    logger.info(f"Socket on interface {interface} closed.")
+                except Exception as e:
+                    logger.error(f"Error closing socket on interface {interface}: {e}")
+
+            for thread in self.listen_threads:
+                if thread.is_alive():
+                    thread.join()
+                    logger.info(f"Listener thread {thread.name} stopped.")
+
+            # Reset message-related client attributes
+            self.reset()
+            logger.info("Server attributes reset.")
+
+        except Exception as e:
+            logger.error(f"Error while stopping the server: {e}")
+
+        finally:
+            logger.info("RMACS server stopped.")
 
 
 def main():
-  
-    server: RMACSServer = RMACSServer()
-    server.start()
+    """
+    Main entry point for the RMACS server.
+    """
+    server: RMACSServer = None
 
+    try:
+        server = RMACSServer()
+        server.start()
+        logger.info("RMACS server is running...")
+
+    except Exception as e:
+        logger.error(f"Unexpected error in the server: {e}")
+        if server:
+            server.stop()
+
+    finally:
+        if server and server.running:
+            logger.info("Ensuring rmacs server stops gracefully.")
+            server.stop()
+        logger.info("Exiting the RMACS server.")
 
 if __name__ == "__main__":
     main()

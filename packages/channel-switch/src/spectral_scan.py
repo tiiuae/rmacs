@@ -20,17 +20,13 @@ class Spectral_Scan:
         self.channel_bw = get_channel_bw(self.interface)
         self.driver = config['RMACS_Config']['driver']
         self.bin_file = config['RMACS_Config']['bin_file']
-        logger.info(" Spectral scan init method called............")
-        #self.scan_interface = "TBD"
 
     def initialize_scan(self) -> None:
         """
         Initialize spectral scan.
         """
-        logger.info("Initialize method called............")
         if self.driver in ("ath9k", "ath10K"):
             output_file = f"/sys/kernel/debug/ieee80211/{self.phy_interface}/{self.driver}/spectral_scan_ctl"
-            logger.info(f"output file : {output_file}")
 
             cmd_background = ["echo", "background"]
             with open(output_file, "w") as file:
@@ -60,7 +56,6 @@ class Spectral_Scan:
         */
         """
         
-        logger.info("Execute scan method called............")
          # Check for interface up
         if self.is_interface_up:
             # Command to execute spectral scan

@@ -168,7 +168,7 @@ class ClientFSM:
             if action:
                 action(event)
         else:
-            logger.info(f"No transition found for event '{event}' in state '{self.state}'")
+            logger.warning(f"No transition found for event '{event}' in state '{self.state}'")
             
     
     
@@ -230,7 +230,6 @@ class InterferenceDetection(threading.Thread):
         
         
         self.processed_ids = set()
-        logger.info(f"The processed_id : {id(self.processed_ids)}")
         self.msg_id_lock = threading.Lock()
         
         self.run_client_fsm_thread = threading.Thread(target=self.run_client_fsm)
@@ -279,7 +278,7 @@ class InterferenceDetection(threading.Thread):
                 # Sleep for a short duration before checking conditions again
                 time.sleep(5)
             except Exception as e:
-                logger.info(f"+Exception in run: {e}")
+                logger.info(f"Exception in run: {e}")
                 return None
                     
     def receive_messages(self, socket, interface) -> None:
@@ -293,12 +292,9 @@ class InterferenceDetection(threading.Thread):
                 try:
                     data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
-                    #logger.info(f"Received message from {address[0]}")
-                    #logger.info(f"Message: {data}")
 
                     # Parse the JSON message
                     parsed_message = json.loads(data)
-                    #logger.info(f"Parsed Message: {parsed_message}")
                     
                 except Exception as e:
                     # Handle netstring decoding errors
@@ -320,7 +316,6 @@ class InterferenceDetection(threading.Thread):
                             self.processed_ids.add(message_id)
                             action_id: int = parsed_message.get("payload", {}).get("a_id")
                             action_str: str = id_to_action.get(action_id)
-                            #logger.info(f"Received message: {unpacked_data} via interface : {interface}")
 
 
                             # Handle frequency switch request
@@ -423,21 +418,6 @@ class InterferenceDetection(threading.Thread):
                 logger.info(f"Frequency switch is successful, Operating frequency : {cur_freq} and requested switch frequency : {self.switching_frequency} both are same")
                 self.num_retries = 0
                 self.fsm.trigger(ClientEvent.SWITCH_SUCCESSFUL)
-            '''
-
-            # If max frequency switch retries reached, and mesh frequency is NaN, mesh failed, exit rmacs module
-            elif self.num_retries == self.max_retries and np.isnan(self.current_frequency):
-                logger.info("Mesh failed... exiting rmacs module")
-                #kill_process_by_pid("rmacs_setup.py")
-            
-            
-            # If max frequency switch retries reached, and mesh switched to a different frequency, continue scheme on current frequency
-            elif self.current_frequency != self.operating_frequency and self.num_retries == self.max_retries:
-                logger.info("Switched to different channel... continue")
-                self.num_retries = 0
-                self.fsm.trigger(ClientEvent.SWITCH_SUCCESSFUL)
-                
-            '''
             
         except subprocess.CalledProcessError as e:
             logger.error(f"Switching frequency error occurred: {str(e)}")
