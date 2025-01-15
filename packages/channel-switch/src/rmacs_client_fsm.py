@@ -557,6 +557,39 @@ class InterferenceDetection(threading.Thread):
         
     def stop(self) -> None:
         """
+        Gracefully stop all threads and close socket connections.
+        """
+        try:
+            self.running = False
+            
+            if self.run_client_fsm_thread.is_alive():
+                self.run_client_fsm_thread.join(timeout=5)
+                logger.info("Client FSM thread stopped successfully.")
+
+            for interface, socket in self.sockets.items():
+                try:
+                    socket.close()
+                    logger.info(f"Closed socket on interface: {interface}")
+                except Exception as e:
+                    logger.error(f"Error while closing socket on {interface}: {e}")
+
+
+            for thread in self.listen_threads:
+                if thread.is_alive():
+                    thread.join(timeout=5)
+                    logger.info("Listen thread stopped successfully.")
+                    
+        except Exception as e:
+            logger.error(f"Error while stopping listen thread: {e}")
+        
+        finally:
+            logger.info("RMACS client stopped.")
+
+
+        
+    '''   
+    def stop(self) -> None:
+        """
         Stops all threads and closes the socket connection.
         """
         self.running = False
@@ -569,13 +602,28 @@ class InterferenceDetection(threading.Thread):
         # Join listen thread
         if self.listen_thread.is_alive():
             self.listen_thread.join()
+    '''
         
     
     
 def main():
-    logger.info('RMACS client thread is started....')
-    client = InterferenceDetection()
-    client.start()
+    # logger.info('RMACS client thread is started....')
+    # client = InterferenceDetection()
+    # client.start()
+    """
+    Main entry point for the RMACS client.
+    """
+    client: InterferenceDetection = None
+
+    try:
+        client = InterferenceDetection()
+        client.start()
+        logger.info("***RMACS client is running...")
+
+    except Exception as e:
+        logger.error(f"Unexpected error in the server: {e}")
+        if client :
+            client.stop()
     
     
 if __name__ == '__main__':

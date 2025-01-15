@@ -526,10 +526,6 @@ class RMACSServer:
                     thread.join()
                     logger.info(f"Listener thread {thread.name} stopped.")
 
-            # Reset message-related client attributes
-            self.reset()
-            logger.info("Server attributes reset.")
-
         except Exception as e:
             logger.error(f"Error while stopping the server: {e}")
 
@@ -546,7 +542,7 @@ def main():
     try:
         server = RMACSServer()
         server.start()
-        logger.info("**RMACS server is running...")
+        logger.info("***RMACS server is running...")
 
     except Exception as e:
         logger.error(f"Unexpected error in the server: {e}")
