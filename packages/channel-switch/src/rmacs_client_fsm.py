@@ -504,6 +504,8 @@ class InterferenceDetection(threading.Thread):
                     self.phy_error = self.traffic_monitor.get_phy_error()
                     self.tx_timeout = self.traffic_monitor.get_tx_timeout()
                     self.air_time = self.traffic_monitor.get_air_time()
+                    self.beacons_late = self.traffic_monitor.get_beacons_late()
+                    logger.info(f"++beacons_late : {self.beacons_late}")
                     if self.phy_error > self.phy_error_limit or self.tx_timeout > self.tx_timeout_limit or self.air_time > self.air_time_limit:
                         self.error_check_count +=1
                         logger.info(f"Observed error in on-going traffic : count = {self.error_check_count}")

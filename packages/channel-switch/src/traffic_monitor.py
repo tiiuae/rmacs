@@ -107,6 +107,8 @@ class TrafficMonitor:
         if self.prev_phy_error is not None and self.cur_phy_error is not None:
             logger.info(f"phy_error: {self.cur_phy_error - self.prev_phy_error}")
             return self.cur_phy_error - self.prev_phy_error
+        else:
+            return 0
                 
     def get_tx_timeout(self) ->int:
         
@@ -117,6 +119,8 @@ class TrafficMonitor:
         if self.prev_tx_timeout is not None and self.cur_tx_timeout is not None:
             logger.info(f"tx_timeout: {self.cur_tx_timeout - self.prev_tx_timeout}")
             return self.cur_tx_timeout - self.prev_tx_timeout
+        else:
+            return 0
         
     def get_air_time(self) -> int:
         self.mesh_freq = get_mesh_freq(self.interface)
@@ -162,6 +166,21 @@ class TrafficMonitor:
                 busy_time = int(re.search(r"\d+", line).group())
 
         return active_time, busy_time
+    
+    def get_beacons_late(self) -> int:
+        
+       self.command = (
+           "sudo morsectrl -i morse1 stats -s /run/current-system/sw/lib/firmware/mm6108.bin "
+           "| grep -i 'BEACONS late from host delay' | awk '$1=$1' | cut -f 2 -d :"
+       )
+       self.prev_beacons_delay = self.run_command(self.command)
+       time.sleep(self.tx_timeout_wait_time)
+       self.cur_beacons_delay = self.run_command(self.command)
+       if self.prev_beacons_delay is not None and self.cur_beacons_delay is not None:
+           logger.info(f"beacons_delay: {self.cur_beacons_delay - self.prev_beacons_delay}")
+           return self.cur_beacons_delay - self.prev_beacons_delay
+       else:
+           return 0
     
     def run_command(self, command: str) -> int:
         try:
