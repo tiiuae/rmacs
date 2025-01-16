@@ -102,7 +102,9 @@ class Spectral_Scan:
                 logger.info(f"Channel Quality Report : {output}")
                 return output
             else:
-                logger.info(f"Command failed with return code: {result.returncode}. Error: {result.stderr}")
+                error_message = result.stderr if result.stderr.strip() else "Unknown error occurred."
+                logger.info(f"+++Command failed with return code: {result.returncode}. Error: {error_message}")
+                logger.info(f"++Command failed with return code: {result.returncode}. Error: {result.stderr}")
                 return [{"error": result.stderr}]
 
         except FileNotFoundError as e:
