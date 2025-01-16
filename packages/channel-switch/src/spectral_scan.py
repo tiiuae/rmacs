@@ -93,8 +93,12 @@ class Spectral_Scan:
 
         try:
             # Run the subprocess command
-            result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            
+            #result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.Popen(
+                ['ss-analyser', self.bin_file, f"{freq}"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True)
             # Check return code and handle output
             if result.returncode == 0:
                 output = result.stdout
@@ -103,8 +107,8 @@ class Spectral_Scan:
                 return output
             else:
                 error_message = result.stderr if result.stderr.strip() else "Unknown error occurred."
-                logger.info(f"+++Command failed with return code: {result.returncode}. Error: {error_message}")
-                logger.info(f"++Command failed with return code: {result.returncode}. Error: {result.stderr}")
+                logger.info(f"p+++Command failed with return code: {result.returncode}. Error: {error_message}")
+                logger.info(f"p++Command failed with return code: {result.returncode}. Error: {result.stderr}")
                 return [{"error": result.stderr}]
 
         except FileNotFoundError as e:
