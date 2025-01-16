@@ -431,7 +431,7 @@ class RMACSServer:
                 try:
                     data, address = socket.recvfrom(1024)
                     data = data.decode('utf-8')
-                    logger.info(f"Received message from {address[0]}")
+                    logger.debug(f"Received message from {address[0]}")
                     # Parse the JSON message
                     parsed_message = json.loads(data)
                 except Exception as e:
@@ -526,12 +526,14 @@ class RMACSServer:
                     thread.join()
                     logger.info(f"Listener thread {thread.name} stopped.")
 
+            self.reset()
+            logger.info("Server attributes reset.")
+
         except Exception as e:
             logger.error(f"Error while stopping the server: {e}")
 
         finally:
             logger.info("RMACS server stopped.")
-
 
 def main():
     """
@@ -542,18 +544,12 @@ def main():
     try:
         server = RMACSServer()
         server.start()
-        logger.info("***RMACS server is running...")
+        logger.info("RMACS server is running...")
 
     except Exception as e:
         logger.error(f"Unexpected error in the server: {e}")
         if server:
             server.stop()
-
-    # finally:
-        # if server and server.running:
-            # logger.info("Ensuring rmacs server stops gracefully.")
-            # server.stop()
-        # logger.info("Exiting the RMACS server.")
 
 if __name__ == "__main__":
     main()

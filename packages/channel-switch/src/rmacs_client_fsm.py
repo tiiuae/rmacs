@@ -304,7 +304,6 @@ class InterferenceDetection(threading.Thread):
                 # Deserialize the MessagePack message
                 try:
                     message_id = parsed_message.get("payload", {}).get("message_id")
-                    logger.info(f"Recevied msg id : {message_id}")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
                             logger.debug(f"Duplicate Msg : Message with ID {message_id} has already been processed and was received from interface : {interface}. Ignoring.")
@@ -369,8 +368,6 @@ class InterferenceDetection(threading.Thread):
 
         :param trigger_event: ClientEvent that triggered the execution of this function.
         """
-        # Send scan data
-        logger.info("Reporting channel Quality...")
         action_id: int = action_to_id["channel_quality_report"]
         message_id: str = str(uuid.uuid4()) 
         data = {'a_id': action_id,'freq': self.scan_freq, 'qual': self.channel_quality_index, 'tx_rate': self.traffic_rate,
@@ -405,7 +402,6 @@ class InterferenceDetection(threading.Thread):
                 logger.info(f"Executed switch freq cmd successfully : ")
                 time.sleep(self.client_beacon_count)
                 cur_freq = get_mesh_freq(self.interface)
-               # logger.info(f"After successful frequency switch  {cur_freq}")
         
              # If maximum frequency switch retries not reached, try to switch again
             if cur_freq != self.switching_frequency and self.num_retries < self.max_retries:
@@ -449,9 +445,6 @@ class InterferenceDetection(threading.Thread):
             if self.channel_quality_index > self.channel_quality_index_threshold:
                 logger.info("Trigger Bad Channel Qaulity index")
                 self.fsm.trigger(ClientEvent.BAD_CHANNEL_QUALITY_INDEX)
-                #self.send_messages(self.channel_report)
-                #self.fsm.trigger(ClientEvent.BAD_CHANNEL_QUALITY_INDEX)
-                #logger.info(f"Current FSM state: {self.fsm.state}")
             else :
                 logger.info("Trigger Good Channel Qaulity index")
                 self.fsm.trigger(ClientEvent.GOOD_CHANNEL_QUALITY_INDEX)
@@ -584,27 +577,6 @@ class InterferenceDetection(threading.Thread):
         
         finally:
             logger.info("RMACS client stopped.")
-
-
-        
-    '''   
-    def stop(self) -> None:
-        """
-        Stops all threads and closes the socket connection.
-        """
-        self.running = False
-        # Close socket
-        if self.socket:
-            self.socket.close()
-        # Join run client FSM thread
-        if self.run_thread.is_alive():
-            self.run_thread.join()
-        # Join listen thread
-        if self.listen_thread.is_alive():
-            self.listen_thread.join()
-    '''
-        
-    
     
 def main():
     # logger.info('RMACS client thread is started....')
@@ -618,7 +590,7 @@ def main():
     try:
         client = InterferenceDetection()
         client.start()
-        logger.info("***RMACS client is running...")
+        logger.info("RMACS client is running...")
 
     except Exception as e:
         logger.error(f"Unexpected error in the server: {e}")
