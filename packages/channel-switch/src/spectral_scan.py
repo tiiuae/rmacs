@@ -98,24 +98,25 @@ class Spectral_Scan:
             # Run the subprocess command
             #result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if shutil.which('ss-analyser') is None:
-                print("Executable 'ss-analyser' not found in PATH")
+                logger.info("Executable 'ss-analyser' not found in PATH")
                 return [{"error": "Executable 'ss-analyser' not found in PATH"}]
             else:
-                print("Executable 'ss-analyser' is found in PATH")
+                logger.info("Executable 'ss-analyser' is found in PATH")
                 
 
             # Check if 'bin_file' exists
             if not os.path.exists(self.bin_file):
-                print(f"Binary file not found: {self.bin_file}")
+                logger.info(f"Binary file not found: {self.bin_file}")
                 return [{"error": f"Binary file not found: {self.bin_file}"}]
             else:
-                print(f"Binary file is found: {self.bin_file}")
+                logger.info(f"Binary file is found: {self.bin_file}")
             
             result = subprocess.Popen(
-                ['ss-analyser', self.bin_file, f"{freq}"],
+                ['ss-analyser', self.bin_file, 'freq', f"{freq}"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True)
+            logger.info(f"Parsing freq : {freq}")
             stdout, stderr = result.communicate()
             logger.info(f"+stdrr : {stderr.strip()}")
             logger.info(f"+stdout : {stdout.strip()}")

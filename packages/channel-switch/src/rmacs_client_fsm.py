@@ -432,6 +432,7 @@ class InterferenceDetection(threading.Thread):
         if self.fsm.state == ClientState.CHANNEL_SCAN:
             self.freq_index = (self.freq_index + 1) % len(self.freq_list)
             self.scan_freq = self.freq_list[self.freq_index]
+            logger.info(f"Performing channel scan at freq : {self.scan_freq}")
             self.channel_report: list[dict] = self.perform_scan(self.scan_freq)
             self.channel_quality_index = self.channel_quality_estimator(self.channel_report)
             logger.info(f"Performed channel scan at freq : {self.scan_freq} and its channel quality index : {self.channel_quality_index}")
@@ -453,8 +454,9 @@ class InterferenceDetection(threading.Thread):
     def perform_scan(self, freq: str) -> list[dict]:
         try:
             self.scan.initialize_scan()
-            self.scan.execute_scan(self.scan_freq)
-            self.channel_quality:list[dict] = self.scan.run_fft_eval(self.scan_freq)
+            self.scan.execute_scan(freq)
+            #self.channel_quality:list[dict] = self.scan.run_fft_eval(self.scan_freq)
+            self.channel_quality:list[dict] = self.scan.run_fft_eval(freq)
         except ValueError as e:
             logger.info(f"ValueError: {e}")
             return []
