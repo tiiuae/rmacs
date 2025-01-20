@@ -3,6 +3,9 @@ import subprocess
 from typing import BinaryIO
 import json
 import re
+import shutil
+import os
+
 
 
 from config import load_config
@@ -94,12 +97,28 @@ class Spectral_Scan:
         try:
             # Run the subprocess command
             #result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if shutil.which('ss-analyser') is None:
+                print("Executable 'ss-analyser' not found in PATH")
+                return [{"error": "Executable 'ss-analyser' not found in PATH"}]
+            else:
+                print("Executable 'ss-analyser' is found in PATH")
+                
+
+            # Check if 'bin_file' exists
+            if not os.path.exists(self.bin_file):
+                print(f"Binary file not found: {self.bin_file}")
+                return [{"error": f"Binary file not found: {self.bin_file}"}]
+            else:
+                print(f"Binary file is found: {self.bin_file}")
+            
             result = subprocess.Popen(
                 ['ss-analyser', self.bin_file, f"{freq}"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True)
             stdout, stderr = result.communicate()
+            logger.info(f"+stdrr : {stderr.strip()}")
+            logger.info(f"+stdout : {stdout.strip()}")
 
         # Check return code and handle output
             if result.returncode == 0:
