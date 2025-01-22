@@ -11,8 +11,6 @@ import subprocess
 import uuid
 import json
 import os
-#from netstring import encode, decode
-#import msgpack
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
@@ -432,7 +430,6 @@ class InterferenceDetection(threading.Thread):
         if self.fsm.state == ClientState.CHANNEL_SCAN:
             self.freq_index = (self.freq_index + 1) % len(self.freq_list)
             self.scan_freq = self.freq_list[self.freq_index]
-            logger.info(f"Performing channel scan at freq : {self.scan_freq}")
             self.channel_report: list[dict] = self.perform_scan(self.scan_freq)
             self.channel_quality_index = self.channel_quality_estimator(self.channel_report)
             logger.info(f"Performed channel scan at freq : {self.scan_freq} and its channel quality index : {self.channel_quality_index}")
@@ -507,7 +504,7 @@ class InterferenceDetection(threading.Thread):
                     self.tx_timeout = self.traffic_monitor.get_tx_timeout()
                     self.air_time = self.traffic_monitor.get_air_time()
                     self.beacons_late = self.traffic_monitor.get_beacons_late()
-                    logger.info(f"++beacons_late : {self.beacons_late}")
+                    logger.info(f"beacons_late : {self.beacons_late}")
                     if self.phy_error > self.phy_error_limit or self.tx_timeout > self.tx_timeout_limit or self.air_time > self.air_time_limit:
                         self.error_check_count +=1
                         logger.info(f"Observed error in on-going traffic : count = {self.error_check_count}")
@@ -583,9 +580,6 @@ class InterferenceDetection(threading.Thread):
             logger.info("RMACS client stopped.")
     
 def main():
-    # logger.info('RMACS client thread is started....')
-    # client = InterferenceDetection()
-    # client.start()
     """
     Main entry point for the RMACS client.
     """

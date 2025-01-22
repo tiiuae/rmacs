@@ -116,20 +116,17 @@ class Spectral_Scan:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True)
-            logger.info(f"Parsing freq : {freq}")
             stdout, stderr = result.communicate()
-            logger.info(f"+stdrr : {stderr.strip()}")
-            logger.info(f"+stdout : {stdout.strip()}")
 
         # Check return code and handle output
             if result.returncode == 0:
                 output = stdout
                 output = re.sub(r'([{,])\s*(\w+)\s*:', r'\1"\2":', output)
-                logger.info(f"+Channel Quality Report : {output}")
+                logger.info(f"Channel Quality Report : {output}")
                 return output
             else:
                 error_message = stderr.strip() if stderr.strip() else "Unknown error occurred."
-                logger.info(f"++Command failed with return code: {result.returncode}. Error: {error_message}")
+                logger.info(f"Command failed with return code: {result.returncode}. Error: {error_message}")
                 return [{"error": f"Return code: {result.returncode}, Message: {error_message}"}]
      
 

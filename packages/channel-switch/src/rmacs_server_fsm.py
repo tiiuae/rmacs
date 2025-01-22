@@ -103,7 +103,6 @@ class RMACSServer:
         # Initialize server objects and attributes
         self.running = False
         self.fsm = RMACSServerFSM(self)
-        #self.args = Config() 
         config = load_config(config_file_path)
         self.interface = config['RMACS_Config']['primary_radio']
         self.freq_quality_report = config['RMACS_Config']['freq_quality_report']
@@ -115,11 +114,11 @@ class RMACSServer:
         self.sockets: Dict = {}
         self.listen_threads: list = []
         
-       # Receive msg 
+        # Receive msg 
         self.bad_channel_message: Dict = {}
         self.channel_report_message: Dict = {}
-        # Variables for Partial Frequency Hopping
         
+        # Variables for Partial Frequency Hopping
         self.top_freq_stability_counter = 0
         self.pfh_index = 0
         self.seq_limit = config['RMACS_Config']['seq_limit']
@@ -135,7 +134,6 @@ class RMACSServer:
         # BCQI 
         self.bcqi_threshold_time = config['RMACS_Config']['bcqi_threshold_time']
 
-        #frequencies: list[tuple], seq_limit: int, hop_interval: int, stability_threshold: int
         # Initialize the lock for thread-safe access
         self.lock = threading.Lock()
 
@@ -150,10 +148,6 @@ class RMACSServer:
         self.operating_frequency: int = get_mesh_freq(self.interface)
         self.mac_address: str = get_mac_address(self.interface)
         self.switch_freq: int = self.operating_frequency
-        self.healing_process_id: str = str(uuid.uuid4())  # Generate a unique ID at the start
-        
-        # Update to DB
-        self.update_flag = config['RMACS_Config']['update_flag']
         
         # A set to store the unique IDs of processed messages
         self.processed_ids = set()
@@ -166,7 +160,7 @@ class RMACSServer:
         logger.info("Start the server............")
         try:     
             self.running = True
-               # Establish socket connections for all interfaces
+            # Establish socket connections for all interfaces
             for interface in self.ch_interfaces:
                 if get_interface_operstate(interface):
                     logger.info(f'Radio interface:[{interface}] is up with channel BW : {get_channel_bw(interface)}MHz')
@@ -214,8 +208,6 @@ class RMACSServer:
                         logger.info("Broadcast Operating Frequency.....")
                         self.last_operating_freq_broadcast = time.time()
                         self.fsm.trigger(ServerEvent.PERIODIC_OPERATING_FREQ_BROADCAST)
-                
-                # self.check_and_update_channel_quality_report()   
                               
                 if self.channel_report_message:
                     logger.info("Received channel report and update it:")
@@ -351,7 +343,6 @@ class RMACSServer:
                     # Exit if the top frequency stays the same for the stability threshold period
                     if self.top_freq_stability_counter == self.stability_threshold:
                         logger.info(f"Top frequency {self.top_freq} has been stable for {self.stability_threshold} consecutive checks. Exiting.")
-                        #self.switch_frequency(self.top_freq)
                         self.operating_frequency = self.top_freq
                         self.switch_freq = self.top_freq
                     
@@ -362,8 +353,6 @@ class RMACSServer:
                         time.sleep(self.beacon_count + self.buffer_period)
                     if get_mesh_freq(self.interface) == self.switch_freq:
                        logger.info(f" CSA is successfull, Node switched to new operating freq : {get_mesh_freq(self.interface)}")
-                       # Wait for the current hop interval before switching to the next frequency
-                       #time.sleep(self.hop_interval)
                     else:
                        logger.info(f" CSA is not successfull, current operating freq : {get_mesh_freq(self.interface)}")
                     self.fsm.trigger(ServerEvent.CHANNEL_SWITCH_REQUEST)
