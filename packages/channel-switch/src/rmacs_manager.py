@@ -98,11 +98,16 @@ async def run_with_nats(config):
     try:
         # Start the NATS subscriber as a background task
         logger.info("Inside run_with_nats method.....")
-        nats_task = asyncio.create_task(nats_subscriber(config))
+        # Start the RMACS scripts in a thread using run_in_executor
+        loop = asyncio.get_running_loop()
+        logger.info("Starting RMACS scripts...")
+        rmacs_task = loop.run_in_executor(None, start_rmacs_scripts, config)
+        #nats_task = asyncio.create_task(nats_subscriber(config))
 
         # Wait for NATS subscriber task
         logger.info("Before nats_task.....")
-        await nats_task
+        await nats_subscriber(config)
+        await rmacs_task
 
     except Exception as e:
         logger.error(f"Error in NATS scripts: {e}")
@@ -220,7 +225,7 @@ def main():
     primary_radio = config['RMACS_Config']['primary_radio']
     # Check radio status 
     check_radio_interface(config,primary_radio)
-    start_rmacs_scripts(config)
+    #start_rmacs_scripts(config)
     
     #------------- NATS - START---------------
     # Start the RMACS scripts and NATS subscriber
