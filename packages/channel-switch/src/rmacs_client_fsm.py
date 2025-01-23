@@ -140,8 +140,6 @@ class ClientFSM:
             self._process_event(event)
         else:
             self.event_queue.append(event)
-            #if self.state != ClientState.IDLE:
-            #    return
 
         # Process any internal queued events
         event_list = self.event_queue.pop_all()
@@ -156,7 +154,6 @@ class ClientFSM:
             logger.info(f"EXT_SWITCH_EVENT detected in state '{self.state}', handling globally.")
             # Handle EXT_SWITCH_EVENT (e.g., switching channels)
             self.client.switch_frequency(event)
-            #self.client.handle_ext_switch_event(event)
             return  # Ensure no further processing of this event happens
         key = (self.state, event)
         if key in self.transitions:
@@ -213,28 +210,24 @@ class InterferenceDetection(threading.Thread):
         # Device MAC address
         self.mac_address = get_mac_address(self.interface)
         
-        # 
+        # Error Monitor 
         self.phy_error = 0   
         self.tx_timeout = 0   
-
         self.num_retries = 0
         self.max_retries = 3
         self.max_error_check = config['RMACS_Config']['max_error_check']
-        
         self.periodic_recovery_switch = config['RMACS_Config']['periodic_recovery_switch']
 
         ## Create listen and client run FSM threads
         self.running = False
-        
-        
         self.processed_ids = set()
         self.msg_id_lock = threading.Lock()
-        
         self.run_client_fsm_thread = threading.Thread(target=self.run_client_fsm)
         
     def run(self) -> None:
         """
-        Connect to the orchestrator node and start the client's operation in separate threads for running the FSM and receiving messages.
+        Connect to the orchestrator node and start the client's operation in separate
+        threads for running the FSM and receiving messages.
         """
         try:
             self.running = True
@@ -251,7 +244,8 @@ class InterferenceDetection(threading.Thread):
                     except ConnectionError as e:
                         logger.error(f"Connection error on {interface}: {e}")
                 else:
-                    logger.info(f'Radio interface:[{interface}] is not up, cannot create a multicast socket connection to it.')                    
+                    logger.info(f'Radio interface:[{interface}] is not up, cannot create
+                                a multicast socket connection to it.')                    
             # Start the server FSM thread
             logger.info("Server started and listening...")
             
@@ -283,7 +277,6 @@ class InterferenceDetection(threading.Thread):
         """
         Receive incoming messages from the orchestrator.
         """
-        logger.info("Client receive msg thread is started.........")
         while self.running:
             try:
                 # Receive incoming messages and decode the netstring encoded data
@@ -304,9 +297,11 @@ class InterferenceDetection(threading.Thread):
                     message_id = parsed_message.get("payload", {}).get("message_id")
                     with self.msg_id_lock:
                         if message_id in self.processed_ids:
-                            logger.debug(f"Duplicate Msg : Message with ID {message_id} has already been processed and was received from interface : {interface}. Ignoring.")
+                            logger.debug(f"Duplicate Msg : Message with ID {message_id} has already
+                                         been processed and was received from interface : {interface}. Ignoring.")
                         else:
-                            logger.debug(f"New Msg: Processing message: {message_id} : msg : {data} via interface : {interface}")
+                            logger.debug(f"New Msg: Processing message: {message_id} : msg : {data} via
+                                         interface : {interface}")
                             # Add the unique ID to the processed set
 
                             #with self.msg_id_lock:
@@ -320,7 +315,8 @@ class InterferenceDetection(threading.Thread):
                                 requested_switch_freq = parsed_message.get("payload", {}).get("freq")
                                 self.update_operating_freq(requested_switch_freq)
                                 cur_freq = get_mesh_freq(self.interface)
-                                logger.info(f"The requested switch freq: {requested_switch_freq} and current operating freq: {cur_freq} via interface : {interface}")
+                                logger.info(f"The requested switch freq: {requested_switch_freq} and
+                                            current operating freq: {cur_freq} via interface : {interface}")
                                 if cur_freq != self.operating_frequency:
                                     self.switching_frequency = requested_switch_freq
                                     logger.info(f"Handling action_str : {action_str} via interface : {interface}")
@@ -341,8 +337,13 @@ class InterferenceDetection(threading.Thread):
         curr_freq: int = get_mesh_freq(self.interface)
         action_id: int = action_to_id["bad_channel_quality_index"]
         message_id: str = str(uuid.uuid4())  
-        data = {'a_id': action_id,'message_id': message_id,
-                'freq': curr_freq, 'qual': self.channel_quality_index, 'tx_rate': self.traffic_rate,'phy_error' : self.phy_error, 'tx_timeout' : self.tx_timeout,
+        data = {'a_id': action_id,
+                'message_id': message_id,
+                'freq': curr_freq,
+                'qual': self.channel_quality_index,
+                'tx_rate': self.traffic_rate,
+                'phy_error' : self.phy_error,
+                'tx_timeout' : self.tx_timeout,
                 'device': self.mac_address}
         logger.info(f'Sending BCQI report to Multicast group: {data}')
         repeat = 2
@@ -368,8 +369,14 @@ class InterferenceDetection(threading.Thread):
         """
         action_id: int = action_to_id["channel_quality_report"]
         message_id: str = str(uuid.uuid4()) 
-        data = {'a_id': action_id,'freq': self.scan_freq, 'qual': self.channel_quality_index, 'tx_rate': self.traffic_rate,
-                'phy_error' : self.phy_error, 'tx_timeout' : self.tx_timeout,'message_id': message_id, 'device': self.mac_address}
+        data = {'a_id': action_id,
+                'freq': self.scan_freq,
+                'qual': self.channel_quality_index,
+                'tx_rate': self.traffic_rate,
+                'phy_error' : self.phy_error,
+                'tx_timeout' : self.tx_timeout,
+                'message_id': message_id,
+                'device': self.mac_address}
         logger.info(f'Sending Channel quality report to Multicast group: {data}')
         
         # Loop through the sockets dictionary and send data
@@ -381,9 +388,11 @@ class InterferenceDetection(threading.Thread):
           
         self.fsm.state = ClientState.CHANNEL_SWITCH
         cur_freq = get_mesh_freq(self.interface)
-        logger.info(f"The current operating frequency is {cur_freq} and requested switch frequency is {self.switching_frequency}")
+        logger.info(f"The current operating frequency is {cur_freq} and
+                    requested switch frequency is {self.switching_frequency}")
         if cur_freq == self.switching_frequency:
-            logger.info(f"Mesh node is currently operating at requested switch frequency:{cur_freq} already")
+            logger.info(f"Mesh node is currently operating at requested
+                        switch frequency:{cur_freq} already")
             self.fsm.trigger(ClientEvent.SWITCH_NOT_REQUIRED)
             return None 
         run_cmd = f"iw dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
@@ -409,7 +418,8 @@ class InterferenceDetection(threading.Thread):
                 
              # Frequency switch successful
             elif cur_freq == self.switching_frequency:
-                logger.info(f"Frequency switch is successful, Operating frequency : {cur_freq} and requested switch frequency : {self.switching_frequency} both are same")
+                logger.info(f"Frequency switch is successful, Operating frequency : {cur_freq} and
+                            requested switch frequency : {self.switching_frequency} both are same")
                 self.num_retries = 0
                 self.fsm.trigger(ClientEvent.SWITCH_SUCCESSFUL)
             
@@ -432,7 +442,8 @@ class InterferenceDetection(threading.Thread):
             self.scan_freq = self.freq_list[self.freq_index]
             self.channel_report: list[dict] = self.perform_scan(self.scan_freq)
             self.channel_quality_index = self.channel_quality_estimator(self.channel_report)
-            logger.info(f"Performed channel scan at freq : {self.scan_freq} and its channel quality index : {self.channel_quality_index}")
+            logger.info(f"Performed channel scan at freq : {self.scan_freq} and 
+                        its channel quality index : {self.channel_quality_index}")
             self.fsm.trigger(ClientEvent.PERFORMED_CHANNEL_SCAN)
             
             
@@ -516,7 +527,8 @@ class InterferenceDetection(threading.Thread):
                         # return
                         self.fsm.trigger(ClientEvent.NO_ERROR)
                 elif self.error_check_count >= self.max_error_check:
-                    logger.info(f"Report error in on-going traffic with phy_error: {self.phy_error} and tx_timeout: {self.tx_timeout}")
+                    logger.info(f"Report error in on-going traffic with phy_error: {self.phy_error} and
+                                tx_timeout: {self.tx_timeout}")
                     self.error_check_count = 0
                     self.monitoring = False
                     self.fsm.trigger(ClientEvent.ERROR)

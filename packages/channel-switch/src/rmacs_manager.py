@@ -2,6 +2,8 @@ import threading
 import signal
 import sys
 import os
+import asyncio
+from nats.aio.client import Client as NATS
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
@@ -13,10 +15,102 @@ from rmacs_util import get_interface_operstate, get_channel_bw, kill_process_by_
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 CONFIG_DIR = "/etc/meshshield"
 
-def get_script_path(script_name):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, script_name)
+# -------------------------------------- NATS Based - Start ------------------------
 
+
+async def connect_nats(nats_server_url):
+    """
+    Connect to the NATS server.
+
+    Args:
+        nats_server_url (str): URL of the NATS server.
+
+    Returns:
+        NATS: An instance of the connected NATS client.
+    """
+    nc = NATS()
+    try:
+        await nc.connect(nats_server_url)
+        logger.info(f"Connected to NATS server at {nats_server_url}")
+        return nc
+    except Exception as e:
+        logger.error(f"Failed to connect to NATS server: {e}")
+        raise
+
+
+async def subscribe_to_topic(nc, topic, message_handler):
+    """
+    Subscribe to a NATS topic and set up a message handler.
+
+    Args:
+        nc (NATS): An instance of the connected NATS client.
+        topic (str): The topic to subscribe to.
+        message_handler (callable): The handler function for processing messages.
+    """
+    try:
+        await nc.subscribe(topic, cb=message_handler)
+        logger.info(f"Subscribed to NATS topic: {topic}")
+    except Exception as e:
+        logger.error(f"Error subscribing to topic '{topic}': {e}")
+        raise
+
+
+async def nats_subscriber(config):
+    """
+    NATS subscription logic.
+    """
+    nats_server_url = config['NATS_Config']['nats_server_url']
+    nats_topic = config['NATS_Config']['topic']
+
+    try:
+        
+        logger.info("Inside nats sub.....")
+        # Connect to NATS
+        nc = await connect_nats(nats_server_url)
+
+        # Define the message handler
+        async def message_handler(msg):
+            subject = msg.subject
+            data = msg.data.decode()
+            logger.info(f"Received a message on '{subject}': {data}")
+
+            if subject == nats_topic:
+                logger.info(f"Handling message: {data}")
+
+        # Subscribe to the topic
+        await subscribe_to_topic(nc, nats_topic, message_handler)
+
+        # Keep the connection alive
+        while True:
+            await asyncio.sleep(1)
+
+    except Exception as e:
+        logger.error(f"Error in NATS subscription: {e}")
+
+    finally:
+        await nc.drain()
+
+
+async def run_with_nats(config):
+    """
+    Runs the NATS subscriber concurrently.
+    """
+    try:
+        # Start the NATS subscriber as a background task
+        logger.info("Inside run_with_nats method.....")
+        nats_task = asyncio.create_task(nats_subscriber(config))
+
+        # Wait for NATS subscriber task
+        logger.info("Before nats_task.....")
+        await nats_task
+
+    except Exception as e:
+        logger.error(f"Error in NATS scripts: {e}")
+        raise
+
+
+# -------------------------------------- NATS Based - END ------------------------
+      
 def start_server(args) -> None:
     """
     Start rmacs server script
@@ -127,6 +221,12 @@ def main():
     # Check radio status 
     check_radio_interface(config,primary_radio)
     start_rmacs_scripts(config)
+    
+    #------------- NATS - START---------------
+    # Start the RMACS scripts and NATS subscriber
+    logger.info("calling run with nats......")
+    asyncio.run(run_with_nats(config))
+    #------------- NATS - END---------------
 
 if __name__ == "__main__":
     main()

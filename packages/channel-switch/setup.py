@@ -28,7 +28,7 @@ setup(
     install_requires=[
         "pyyaml",  # For configuration handling
         "systemd", # For system logging integration
-        "msgpack"
+        "nats-py"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

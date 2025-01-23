@@ -55,7 +55,12 @@ default_config = {
         "periodic_operating_freq_broadcast": 15.0,
         "log_file": "/var/log/rmacs.log",
         "bin_file": "/home/scmd/sample.bin",
+    },
+    "NATS_Config": {       
+    "nats_server_url": "nats://localhost:4222",
+    "topic": "rmacs_setting"       
     }
+    
 }
 def merge_dicts(default, user):
     """Recursively merge user config into default config."""

@@ -35,7 +35,7 @@
         propagatedBuildInputs = [
           pkgs.python3Packages.pyyaml
           pkgs.python3Packages.systemd
-          pkgs.python3Packages.msgpack
+          pkgs.python3Packages.nats-py
         ];
         meta = with lib; {
           description = "Resilient Mesh Automatic Channel Selection";

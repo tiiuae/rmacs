@@ -1,12 +1,6 @@
 import socket
 import struct
-#from netstring import encode, decode
-import msgpack
-
-
-#from config_old import Config, MULTICAST_CONFIG
-from config import create_default_config, load_config
-
+from config import load_config
 from logging_config import logger
 from rmacs_util import create_json_message
 
@@ -76,5 +70,9 @@ def send_data(socket, data, interface) -> None:
         logger.info(f"Broken pipe error")
     except Exception as e:
         logger.info(f"Error in sending data : {e}")
+ 
+ 
+
+
 
         
