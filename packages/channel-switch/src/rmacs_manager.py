@@ -17,7 +17,6 @@ CONFIG_DIR = "/etc/meshshield"
 
 # -------------------------------------- NATS Based - Start ------------------------
 
-
 async def connect_nats(nats_server_url):
     """
     Connect to the NATS server.
@@ -30,7 +29,6 @@ async def connect_nats(nats_server_url):
     """
     nc = NATS()
     try:
-        logger.info("before connects to nats...")
         await nc.connect(nats_server_url)
         logger.info(f"Connected to NATS server at {nats_server_url}")
         return nc
@@ -38,6 +36,21 @@ async def connect_nats(nats_server_url):
         logger.error(f"Failed to connect to NATS server: {e}")
         raise
 
+async def publish_to_topic(nc, topic, message):
+    """
+    Publish a message to a NATS topic.
+
+    Args:
+        nc (NATS): An instance of the connected NATS client.
+        topic (str): The topic to publish to.
+        message (str): The message to publish.
+    """
+    try:
+        await nc.publish(topic, message.encode())
+        logger.info(f"Published message to NATS topic '{topic}': {message}")
+    except Exception as e:
+        logger.error(f"Error publishing to topic '{topic}': {e}")
+        raise
 
 async def subscribe_to_topic(nc, topic, message_handler):
     """
@@ -55,7 +68,6 @@ async def subscribe_to_topic(nc, topic, message_handler):
         logger.error(f"Error subscribing to topic '{topic}': {e}")
         raise
 
-
 async def nats_subscriber(config):
     """
     NATS subscription logic.
@@ -64,24 +76,23 @@ async def nats_subscriber(config):
     nats_topic = config['NATS_Config']['topic']
 
     try:
-        
-        logger.info("Inside nats sub.....")
         # Connect to NATS
         nc = await connect_nats(nats_server_url)
 
         # Define the message handler
         async def message_handler(msg):
-            logger.info("Inside message handler ::nats")
-            logger.info(f"Inside message handler :: {msg}")
             subject = msg.subject
             data = msg.data.decode()
-            logger.info(f"Received a message on '{subject}': {data}")
+            logger.info(f"Received a message from MS NATS server on '{subject}': {data}")
 
             if subject == nats_topic:
                 logger.info(f"Handling message: {data}")
 
         # Subscribe to the topic
         await subscribe_to_topic(nc, nats_topic, message_handler)
+
+        # Publish a test message to rmacs_setting
+        await publish_to_topic(nc, "rmacs_msg", "Current mesh operating frequency")
 
         # Keep the connection alive
         while True:
@@ -93,29 +104,23 @@ async def nats_subscriber(config):
     finally:
         await nc.drain()
 
-
 async def run_with_nats(config):
     """
     Runs the NATS subscriber concurrently.
     """
     try:
-        # Start the NATS subscriber as a background task
-        logger.info("Inside run_with_nats method.....")
         # Start the RMACS scripts in a thread using run_in_executor
         loop = asyncio.get_running_loop()
         logger.info("Starting RMACS scripts...")
         rmacs_task = loop.run_in_executor(None, start_rmacs_scripts, config)
-        #nats_task = asyncio.create_task(nats_subscriber(config))
 
         # Wait for NATS subscriber task
-        logger.info("Before nats_task.....")
         await nats_subscriber(config)
         await rmacs_task
 
     except Exception as e:
         logger.error(f"Error in NATS scripts: {e}")
         raise
-
 
 # -------------------------------------- NATS Based - END ------------------------
       
@@ -133,8 +138,6 @@ def start_server(args) -> None:
         logger.error(f"Failed to start rmacs_server service: {e}")
         raise
 
-
-
 def start_client(args) -> None:
     """
     Start rmacs client script.
@@ -148,7 +151,6 @@ def start_client(args) -> None:
     except Exception as e:
         logger.error(f"Failed to start rmacs_client service: {e}")
         raise
-
 
 def start_rmacs_scripts(config) -> None:
     """
@@ -173,7 +175,6 @@ def start_rmacs_scripts(config) -> None:
         raise Exception(e)
  
 
-
 # Function to handle the SIGTERM signal
 def sigterm_handler(signum, frame):
     """
@@ -197,7 +198,6 @@ def sigterm_handler(signum, frame):
 
 # Set up the signal handler for SIGTERM
 signal.signal(signal.SIGTERM, sigterm_handler)
-
 
 def create_rmacs_config():
      # Load the configuration
@@ -232,7 +232,6 @@ def main():
     
     #------------- NATS - START---------------
     # Start the RMACS scripts and NATS subscriber
-    logger.info("calling run with nats......")
     asyncio.run(run_with_nats(config))
     #------------- NATS - END---------------
 

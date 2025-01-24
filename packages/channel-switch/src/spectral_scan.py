@@ -10,7 +10,7 @@ import os
 
 from config import load_config
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
-from rmacs_util import get_mesh_freq, get_channel_bw, get_interface_operstate, get_phy_interface
+from rmacs_util import get_mesh_freq, get_channel_bw, get_interface_operstate, get_phy_interface, path_lookup
 from logging_config import logger
 
 class Spectral_Scan:
@@ -97,7 +97,7 @@ class Spectral_Scan:
         try:
             # Run the subprocess command
             #result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            ss_analyser_path = shutil.which('ss-analyser')  
+            ss_analyser_path = path_lookup('ss-analyser')  
             if ss_analyser_path is None:
                 logger.info("Executable 'ss-analyser' not found in PATH")
                 return [{"error": "*Executable 'ss-analyser' not found in PATH"}]

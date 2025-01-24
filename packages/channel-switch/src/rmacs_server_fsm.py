@@ -17,7 +17,7 @@ if parent_directory not in sys.path:
 from config import load_config
 
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
-from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw
+from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw, path_lookup
 from logging_config import logger
 from rmacs_comms import rmacs_comms, send_data
 
@@ -371,8 +371,12 @@ class RMACSServer:
         if cur_freq == frequency:
             logger.info(f"Mesh node is currently operating at requested freq:{cur_freq} switch")
             return False 
-        run_cmd = f"iw dev {interface} switch freq {frequency} HT{bandwidth} beacons {beacon_count}"
-        logger.info(f"run_cmd: {run_cmd}")
+        iw_path = path_lookup('iw')
+        if iw_path is not None:
+            run_cmd = f"{iw_path} dev {interface} switch freq {frequency} HT{bandwidth} beacons {beacon_count}"
+        else:
+            logger.error(f"iw utility is not found")
+        logger.info(f"*run_cmd: {run_cmd}")
         try:
             result = subprocess.run(run_cmd, 
                                 shell=True, 

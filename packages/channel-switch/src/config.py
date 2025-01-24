@@ -58,7 +58,7 @@ default_config = {
     },
     "NATS_Config": {       
     "nats_server_url": "nats://localhost:4222",
-    "topic": "rmacs_setting"       
+    "topic": "comms.settings.RMACS_REQ"       
     }
     
 }

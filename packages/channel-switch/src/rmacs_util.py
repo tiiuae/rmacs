@@ -1,9 +1,8 @@
-import os
-#import netifaces as ni
 import subprocess
 import re
 import json
 from logging_config import logger
+import shutil
 
 # Channel to frequency and frequency to channel mapping
 CH_TO_FREQ = {1: 2412, 2: 2417, 3: 2422, 4: 2427, 5: 2432, 6: 2437, 7: 2442, 8: 2447, 9: 2452, 10: 2457, 11: 2462,
@@ -271,3 +270,6 @@ def create_json_message(msg_type, payload=None, status_code=0):
     # Convert the message dictionary to a JSON string
     return json.dumps(message, indent=4)
 
+def path_lookup(binary) -> str:
+    
+    return shutil.which(binary)  

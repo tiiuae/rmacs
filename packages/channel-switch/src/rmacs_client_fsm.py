@@ -18,7 +18,7 @@ if parent_directory not in sys.path:
 from logging_config import logger
 from config import load_config
 from traffic_monitor import TrafficMonitor
-from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw
+from rmacs_util import get_mesh_freq, get_mac_address, get_interface_operstate, get_channel_bw, path_lookup
 from spectral_scan import Spectral_Scan
 from rmacs_comms import rmacs_comms, send_data
 
@@ -387,9 +387,13 @@ class InterferenceDetection(threading.Thread):
         if cur_freq == self.switching_frequency:
             logger.info(f"Mesh node is currently operating at requested switch frequency:{cur_freq} already")
             self.fsm.trigger(ClientEvent.SWITCH_NOT_REQUIRED)
-            return None 
-        run_cmd = f"iw dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
-        logger.info(f"run_cmd : {run_cmd}")
+            return None
+        iw_path = path_lookup('iw')
+        if iw_path is not None:
+            run_cmd = f"{iw_path} dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
+        else:
+            logger.error("iw utility is not found")
+        logger.info(f"*run_cmd : {run_cmd}")
         try:
             result = subprocess.run(run_cmd, 
                                 shell=True, 
