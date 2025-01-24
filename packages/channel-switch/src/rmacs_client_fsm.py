@@ -385,8 +385,7 @@ class InterferenceDetection(threading.Thread):
         cur_freq = get_mesh_freq(self.interface)
         logger.info(f"The current operating frequency is {cur_freq} and requested switch frequency is {self.switching_frequency}")
         if cur_freq == self.switching_frequency:
-            logger.info(f"Mesh node is currently operating at requested
-                        switch frequency:{cur_freq} already")
+            logger.info(f"Mesh node is currently operating at requested switch frequency:{cur_freq} already")
             self.fsm.trigger(ClientEvent.SWITCH_NOT_REQUIRED)
             return None 
         run_cmd = f"iw dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
@@ -519,8 +518,7 @@ class InterferenceDetection(threading.Thread):
                         # return
                         self.fsm.trigger(ClientEvent.NO_ERROR)
                 elif self.error_check_count >= self.max_error_check:
-                    logger.info(f"Report error in on-going traffic with phy_error: {self.phy_error} and
-                                tx_timeout: {self.tx_timeout}")
+                    logger.info(f"Report error in on-going traffic with phy_error: {self.phy_error} and tx_timeout: {self.tx_timeout}")
                     self.error_check_count = 0
                     self.monitoring = False
                     self.fsm.trigger(ClientEvent.ERROR)
