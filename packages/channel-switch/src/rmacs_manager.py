@@ -30,6 +30,7 @@ async def connect_nats(nats_server_url):
     """
     nc = NATS()
     try:
+        logger.info("before connects to nats...")
         await nc.connect(nats_server_url)
         logger.info(f"Connected to NATS server at {nats_server_url}")
         return nc
@@ -70,6 +71,7 @@ async def nats_subscriber(config):
 
         # Define the message handler
         async def message_handler(msg):
+            logger.info("Inside message handler ::nats")
             subject = msg.subject
             data = msg.data.decode()
             logger.info(f"Received a message on '{subject}': {data}")

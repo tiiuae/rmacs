@@ -97,11 +97,12 @@ class Spectral_Scan:
         try:
             # Run the subprocess command
             #result = subprocess.run(['ss-analyser', self.bin_file, f"{freq}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if shutil.which('ss-analyser') is None:
+            ss_analyser_path = shutil.which('ss-analyser')  
+            if ss_analyser_path is None:
                 logger.info("Executable 'ss-analyser' not found in PATH")
-                return [{"error": "Executable 'ss-analyser' not found in PATH"}]
+                return [{"error": "*Executable 'ss-analyser' not found in PATH"}]
             else:
-                logger.info("Executable 'ss-analyser' is found in PATH")
+                logger.info(f"*Executable 'ss-analyser' is found at {ss_analyser_path}")
                 
 
             # Check if 'bin_file' exists
@@ -112,7 +113,7 @@ class Spectral_Scan:
                 logger.info(f"Binary file is found: {self.bin_file}")
             
             result = subprocess.Popen(
-                ['ss-analyser', self.bin_file, 'freq', f"{freq}"],
+                [ss_analyser_path, self.bin_file, 'freq', f"{freq}"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True)
