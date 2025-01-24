@@ -72,6 +72,7 @@ async def nats_subscriber(config):
         # Define the message handler
         async def message_handler(msg):
             logger.info("Inside message handler ::nats")
+            logger.info(f"Inside message handler :: {msg}")
             subject = msg.subject
             data = msg.data.decode()
             logger.info(f"Received a message on '{subject}': {data}")
