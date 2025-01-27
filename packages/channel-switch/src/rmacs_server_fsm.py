@@ -5,6 +5,8 @@ import subprocess
 import os
 import sys
 import json
+import signal
+import atexit
 
 from enum import auto, Enum
 from typing import List, Tuple, Dict
@@ -157,7 +159,6 @@ class RMACSServer:
         """
         Starts the server and listens for incoming client connections.
         """
-        logger.info("Start the server............")
         try:     
             self.running = True
             # Establish socket connections for all interfaces
@@ -374,24 +375,25 @@ class RMACSServer:
         iw_path = path_lookup('iw')
         if iw_path is not None:
             run_cmd = f"{iw_path} dev {interface} switch freq {frequency} HT{bandwidth} beacons {beacon_count}"
-        else:
-            logger.error(f"iw utility is not found")
-        logger.info(f"*run_cmd: {run_cmd}")
-        try:
-            result = subprocess.run(run_cmd, 
-                                shell=True, 
-                                capture_output=True, 
-                                text=True)
-            if(result.returncode != 0):
-                logger.info("Failed to execute the switch frequency command")
-                return False
-            else:
-                logger.info("Channel Switch cmd run successfully!")
-                return True
+            logger.info(f"+run_cmd: {run_cmd}")
+            try:
+                result = subprocess.run(run_cmd, 
+                                    shell=True, 
+                                    capture_output=True, 
+                                    text=True)
+                if(result.returncode != 0):
+                    logger.info("Failed to execute the switch frequency command")
+                    return False
+                else:
+                    logger.info("Channel Switch cmd run successfully!")
+                    return True
 
-        except subprocess.CalledProcessError as e:
-            logger.info(f"Error: {e}")
-            return False
+            except subprocess.CalledProcessError as e:
+                logger.info(f"Error: {e}")
+                return False
+            
+        else:
+            logger.warning(f"iw utility is not found")
 
 
     def send_switch_frequency_message(self, trigger_event) -> None:
@@ -527,6 +529,28 @@ class RMACSServer:
 
         finally:
             logger.info("RMACS server stopped.")
+            
+def handle_exit_signal(server: RMACSServer, signum, frame) -> None:
+    """
+    Handles termination signals (SIGTERM, SIGINT) and gracefully stops the server.
+    :param server: The RMACSServer instance.
+    :param signum: The signal number received.
+    :param frame: The current stack frame (ignored here).
+    """
+    logger.info(f"Received signal {signum}. Gracefully stopping the RMACS server...")
+    if server:
+        server.stop()
+    sys.exit(0)  # Exit the application
+def register_exit_handlers(server: RMACSServer) -> None:
+    """
+    Registers signal handlers and atexit cleanup for the RMACS server.
+    :param server: The RMACSServer instance.
+    """
+    # Register signal handlers
+    signal.signal(signal.SIGTERM, lambda s, f: handle_exit_signal(server, s, f))
+    signal.signal(signal.SIGINT, lambda s, f: handle_exit_signal(server, s, f))
+    # Register atexit cleanup
+    atexit.register(lambda: server.stop() if server else None)
 
 def main():
     """
@@ -536,6 +560,7 @@ def main():
 
     try:
         server = RMACSServer()
+        register_exit_handlers(server)
         server.start()
         logger.info("RMACS server is running...")
 

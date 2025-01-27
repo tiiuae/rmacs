@@ -391,37 +391,38 @@ class InterferenceDetection(threading.Thread):
         iw_path = path_lookup('iw')
         if iw_path is not None:
             run_cmd = f"{iw_path} dev {self.interface} switch freq {self.switching_frequency} HT{self.channel_bandwidth} beacons {self.client_beacon_count}"
+            logger.info(f"+run_cmd : {run_cmd}")
+            try:
+                result = subprocess.run(run_cmd, 
+                                    shell=True, 
+                                    capture_output=True, 
+                                    text=True)
+                if(result.returncode != 0):
+                    logger.info("Failed to execute the switch frequency command")
+                    return None
+                else:
+                    logger.info(f"Executed switch freq cmd successfully : ")
+                    time.sleep(self.client_beacon_count)
+                    cur_freq = get_mesh_freq(self.interface)
+
+                 # If maximum frequency switch retries not reached, try to switch again
+                if cur_freq != self.switching_frequency and self.num_retries < self.max_retries:
+                    logger.info(f"Frequency switch is unsuccessful, retry {self.num_retries}")
+                    self.num_retries += 1
+                    self.fsm.trigger(ClientEvent.SWITCH_UNSUCCESSFUL)
+
+                 # Frequency switch successful
+                elif cur_freq == self.switching_frequency:
+                    logger.info(f"Frequency switch is successful, Operating frequency : {cur_freq} and requested switch frequency : {self.switching_frequency} both are same")
+                    self.num_retries = 0
+                    self.fsm.trigger(ClientEvent.SWITCH_SUCCESSFUL)
+
+            except subprocess.CalledProcessError as e:
+                logger.warning(f"Switching frequency error occurred: {str(e)}")
+                self.fsm.trigger(ClientEvent.SWITCH_UNSUCCESSFUL)        
         else:
-            logger.error("iw utility is not found")
-        logger.info(f"*run_cmd : {run_cmd}")
-        try:
-            result = subprocess.run(run_cmd, 
-                                shell=True, 
-                                capture_output=True, 
-                                text=True)
-            if(result.returncode != 0):
-                logger.info("Failed to execute the switch frequency command")
-                return None
-            else:
-                logger.info(f"Executed switch freq cmd successfully : ")
-                time.sleep(self.client_beacon_count)
-                cur_freq = get_mesh_freq(self.interface)
-        
-             # If maximum frequency switch retries not reached, try to switch again
-            if cur_freq != self.switching_frequency and self.num_retries < self.max_retries:
-                logger.info(f"Frequency switch is unsuccessful, retry {self.num_retries}")
-                self.num_retries += 1
-                self.fsm.trigger(ClientEvent.SWITCH_UNSUCCESSFUL)
-                
-             # Frequency switch successful
-            elif cur_freq == self.switching_frequency:
-                logger.info(f"Frequency switch is successful, Operating frequency : {cur_freq} and requested switch frequency : {self.switching_frequency} both are same")
-                self.num_retries = 0
-                self.fsm.trigger(ClientEvent.SWITCH_SUCCESSFUL)
-            
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Switching frequency error occurred: {str(e)}")
-            self.fsm.trigger(ClientEvent.SWITCH_UNSUCCESSFUL)  
+            logger.warning("iw utility is not found")
+            return None
              
     def update_operating_freq(self, requested_switch_freq):
         """

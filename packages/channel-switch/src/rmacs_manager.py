@@ -67,6 +67,16 @@ async def subscribe_to_topic(nc, topic, message_handler):
     except Exception as e:
         logger.error(f"Error subscribing to topic '{topic}': {e}")
         raise
+    
+async def handle_NATS_message(message):
+    
+    try:
+        pass
+        
+    except Exception as e:
+        logger.error(f"Error in handling the '{message}': {e}")
+        raise
+        
 
 async def nats_subscriber(config):
     """

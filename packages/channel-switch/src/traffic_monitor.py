@@ -5,7 +5,7 @@ import sys
 import re
 
 from logging_config import logger
-from rmacs_util import get_mesh_freq
+from rmacs_util import get_mesh_freq, path_lookup
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
    sys.path.append(parent_directory)
@@ -38,16 +38,9 @@ class TrafficMonitor:
         self.tx_bytes_path = f"/sys/class/net/{self.interface}/statistics/tx_bytes"
         self.tx_error_path = f"/sys/class/net/{self.interface}/statistics/tx_errors"
         self.fw_stats_path = f"/sys/kernel/debug/ieee80211/phy1/{self.interface}/fw_stats"
+        self.ethtool_path = path_lookup('ethtool')
+        self.iw_path = path_lookup('iw') 
         
-        
-        '''
-        To get the phy_error : 
-        /usr/sbin/ethtool -S wlp1s0|grep -i 'd_rx_phy_err:'|cut -f 2 -d :
-        To get the tx_timeout :
-        
-        /usr/sbin/ethtool -S wlp1s0|grep -i 'd_tx_timeout:'|cut -f 2 -d : 
-        
-        '''
     def traffic_monitor(self) -> int:
         '''
         Monitor the Network traffic at specific Network Interface.
@@ -99,60 +92,82 @@ class TrafficMonitor:
         return self.traffic_in_kbps
     
     def get_phy_error(self) ->int:
-        
-        self.command = f"/usr/sbin/ethtool -S {self.interface} | grep -i 'd_rx_phy_err:' | cut -f 2 -d :"
-        self.prev_phy_error = self.run_command(self.command)
-        time.sleep(self.phy_error_wait_time)
-        self.cur_phy_error = self.run_command(self.command)
-        if self.prev_phy_error is not None and self.cur_phy_error is not None:
-            logger.info(f"phy_error: {self.cur_phy_error - self.prev_phy_error}")
-            return self.cur_phy_error - self.prev_phy_error
+        if self.ethtool_path is not None:
+            try:   
+                self.command = f"{self.ethtool_path} -S {self.interface} | grep -i 'd_rx_phy_err:' | cut -f 2 -d :"
+                self.prev_phy_error = self.run_command(self.command)
+                time.sleep(self.phy_error_wait_time)
+                self.cur_phy_error = self.run_command(self.command)
+                if self.prev_phy_error is not None and self.cur_phy_error is not None:
+                    logger.info(f"phy_error: {self.cur_phy_error - self.prev_phy_error}")
+                    return self.cur_phy_error - self.prev_phy_error
+                else:
+                    return 0
+            except Exception as e:
+                logger.warning(f"Error occurred while getting PHY errors: {e}")
+                return 0
         else:
+            logger.warning('ethtool is not found')
             return 0
+            
+            
                 
     def get_tx_timeout(self) ->int:
-        
-        self.command = f"/usr/sbin/ethtool -S {self.interface} | grep -i 'd_tx_timeout:' | cut -f 2 -d :"
-        self.prev_tx_timeout = self.run_command(self.command)
-        time.sleep(self.tx_timeout_wait_time)
-        self.cur_tx_timeout = self.run_command(self.command)
-        if self.prev_tx_timeout is not None and self.cur_tx_timeout is not None:
-            logger.info(f"tx_timeout: {self.cur_tx_timeout - self.prev_tx_timeout}")
-            return self.cur_tx_timeout - self.prev_tx_timeout
+             
+        if self.ethtool_path is not None:
+            try:   
+                self.command = f"{self.ethtool_path} -S {self.interface} | grep -i 'd_tx_timeout:' | cut -f 2 -d :"
+                self.prev_tx_timeout = self.run_command(self.command)
+                time.sleep(self.tx_timeout_wait_time)
+                self.cur_tx_timeout = self.run_command(self.command)
+                if self.prev_tx_timeout is not None and self.cur_tx_timeout is not None:
+                    logger.info(f"tx_timeout: {self.cur_tx_timeout - self.prev_tx_timeout}")
+                    return self.cur_tx_timeout - self.prev_tx_timeout
+                else:
+                    return 0     
+            except Exception as e:
+                logger.warning(f"Error occurred while getting tx_timeout: {e}")
+                return 0
         else:
+            logger.warning('ethtool is not found')
             return 0
         
     def get_air_time(self) -> int:
         self.mesh_freq = get_mesh_freq(self.interface)
-        self.command = f"iw {self.interface} survey dump | grep -A 2 {self.mesh_freq}| grep -E 'channel active time|channel busy time'"
+        if self.iw_path is not None:
+            self.command = f"iw {self.interface} survey dump | grep -A 2 {self.mesh_freq}| grep -E 'channel active time|channel busy time'"
 
-        self.prev_value = self.run_command(self.command)
-        time.sleep(self.tx_timeout_wait_time)
-        self.cur_value = self.run_command(self.command)
-        act_time_1, bsy_time_1 = self.parse_air_time(self.prev_value)
-        act_time_2, bsy_time_2 = self.parse_air_time(self.cur_value)
-        
-        # Check for missing values
-        if None in (act_time_1, bsy_time_1, act_time_2, bsy_time_2):
-            logger.info("Error: One or more RF parameters are missing.")
-            return
+            self.prev_value = self.run_command(self.command)
+            time.sleep(self.tx_timeout_wait_time)
+            self.cur_value = self.run_command(self.command)
+            act_time_1, bsy_time_1 = self.parse_air_time(self.prev_value)
+            act_time_2, bsy_time_2 = self.parse_air_time(self.cur_value)
 
-        # Calculate the differences
-        act_time_delta = act_time_2 - act_time_1
-        bsy_time_delta = bsy_time_2 - bsy_time_1
+            # Check for missing values
+            if None in (act_time_1, bsy_time_1, act_time_2, bsy_time_2):
+                logger.info("Error: One or more RF parameters are missing.")
+                return None
 
-        # Check for zero active time delta to avoid division by zero
-        if act_time_delta == 0:
-            logger.info("Active time delta is zero. Cannot calculate air time.")
-            return
+            # Calculate the differences
+            act_time_delta = act_time_2 - act_time_1
+            bsy_time_delta = bsy_time_2 - bsy_time_1
 
-        # Calculate air time percentage
-        air_time = (bsy_time_delta / act_time_delta) * 100
+            # Check for zero active time delta to avoid division by zero
+            if act_time_delta == 0:
+                logger.info("Active time delta is zero. Cannot calculate air time.")
+                return None
 
-        logger.debug(f"Active Time Delta: {act_time_delta} ms")
-        logger.debug(f"Busy Time Delta: {bsy_time_delta} ms")
-        logger.info(f"Air Time: {air_time}")
-        return air_time        
+            # Calculate air time percentage
+            air_time = (bsy_time_delta / act_time_delta) * 100
+
+            logger.debug(f"Active Time Delta: {act_time_delta} ms")
+            logger.debug(f"Busy Time Delta: {bsy_time_delta} ms")
+            logger.info(f"Air Time: {air_time}")
+            return air_time 
+        else:
+            logger.warning('iw utility is not found')
+            return None
+                   
 
     def parse_air_time(rf_params):
  
@@ -217,19 +232,7 @@ class TrafficMonitor:
         else:
             raise FileNotFoundError(f"{syspath} does not exist.")
         
-'''      
-def main():
-    logger.info('Main called ..........')
-    obj = TrafficMonitor()
-    phy_error = obj.get_phy_error()
-    tx_timeout = obj.get_tx_timeout()
-    logger.info(f"phy error : {phy_error}, tx_timeout = {tx_timeout}")
-    pass
 
-if __name__ == "__main__":
-    main()
-    
-'''
         
     
     
