@@ -3,7 +3,13 @@ import signal
 import sys
 import os
 import asyncio
+import queue
 from nats.aio.client import Client as NATS
+import time
+import yaml
+from src.rmacs_server_fsm import main as rmacs_server_main
+from src.rmacs_client_fsm import main as rmacs_client_main
+
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
 if parent_directory not in sys.path:
@@ -15,7 +21,12 @@ from rmacs_util import get_interface_operstate, get_channel_bw, kill_process_by_
 config_file_path = '/etc/meshshield/rmacs_config.yaml'
 CONFIG_DIR = "/etc/meshshield"
 
-# -------------------------------------- NATS Based - Start ------------------------
+# Global variable to handle shutdown
+graceful_shutdown = False
+
+nats_msg_queue = queue.Queue()
+
+
 
 async def connect_nats(nats_server_url):
     """
@@ -68,38 +79,41 @@ async def subscribe_to_topic(nc, topic, message_handler):
         logger.error(f"Error subscribing to topic '{topic}': {e}")
         raise
     
-async def handle_NATS_message(message):
+async def handle_NATS_message(topic, payload):
     
     try:
         pass
         
     except Exception as e:
-        logger.error(f"Error in handling the '{message}': {e}")
+        logger.error(f"Error in handling the '{payload}': {e}")
         raise
         
+
 
 async def nats_subscriber(config):
     """
     NATS subscription logic.
     """
     nats_server_url = config['NATS_Config']['nats_server_url']
-    nats_topic = config['NATS_Config']['topic']
+    rmacs_sub_topic = config['NATS_Config']['rmacs_sub_topic']
 
     try:
         # Connect to NATS
         nc = await connect_nats(nats_server_url)
 
         # Define the message handler
-        async def message_handler(msg):
-            subject = msg.subject
-            data = msg.data.decode()
-            logger.info(f"Received a message from MS NATS server on '{subject}': {data}")
+        async def message_handler(message):
+            topic = message.subject
+            payload = message.data.decode()
+            logger.info(f"Received a message from MS NATS server on '{topic}': {payload}")
+            handle_NATS_message(topic, payload)
 
-            if subject == nats_topic:
-                logger.info(f"Handling message: {data}")
+            if topic == rmacs_sub_topic:
+                
+                logger.info(f"Handling message: {payload}")
 
         # Subscribe to the topic
-        await subscribe_to_topic(nc, nats_topic, message_handler)
+        await subscribe_to_topic(nc, rmacs_sub_topic, message_handler)
 
         # Publish a test message to rmacs_setting
         await publish_to_topic(nc, "rmacs_msg", "Current mesh operating frequency")
@@ -132,9 +146,9 @@ async def run_with_nats(config):
         logger.error(f"Error in NATS scripts: {e}")
         raise
 
-# -------------------------------------- NATS Based - END ------------------------
+
       
-def start_server(args) -> None:
+def start_rmacs_server(args) -> None:
     """
     Start rmacs server script
 
@@ -148,7 +162,7 @@ def start_server(args) -> None:
         logger.error(f"Failed to start rmacs_server service: {e}")
         raise
 
-def start_client(args) -> None:
+def start_rmacs_client(config, nats_msg_queue) -> None:
     """
     Start rmacs client script.
 
@@ -156,8 +170,7 @@ def start_client(args) -> None:
     """
     try:
         # Start or restart the service using systemctl
-        run_command(["rmacs_client"],args,
-            "Failed to start rmacs_client service")
+        run_command(["rmacs_client"],config,nats_msg_queue)
     except Exception as e:
         logger.error(f"Failed to start rmacs_client service: {e}")
         raise
@@ -169,45 +182,22 @@ def start_rmacs_scripts(config) -> None:
     
     try:
         if config['RMACS_Config']['orchestra_node']:
-            server_thread = threading.Thread(target=start_server, args=(config,))
-            client_thread = threading.Thread(target=start_client, args=(config,))
+            server_thread = threading.Thread(target=rmacs_server_main, args=(nats_msg_queue,))
+            client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
             server_thread.start()
             client_thread.start()
             server_thread.join()
             client_thread.join()
         else:
-            client_thread = threading.Thread(target=start_client, args=(config,))
+            client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
             client_thread.start()
             client_thread.join()
+            
         
     except Exception as e:
         logger.info(f"Error starting rmacs server/client scripts: {e}")
         raise Exception(e)
  
-
-# Function to handle the SIGTERM signal
-def sigterm_handler(signum, frame):
-    """
-    Handles a signal interrupt (SIGINT).
-
-    :param signum: The signal number received by the handler.
-    :param frame: The current execution frame.
-    """
-    try:
-        logger.info(f"Received SIGTERM signal. Attempting to stop rmacs scripts.")
-        kill_process_by_pid("rmacs_client_fsm.py")
-        kill_process_by_pid("rmacs_server_fsm.py")
-        logger.info("rmacs scripts stopped.")
-        # Exit after cleanup
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"Error killing rmacs client and server FSM scripts. {str(e)}")
-        # Exit with an error code
-        sys.exit(1)
-
-
-# Set up the signal handler for SIGTERM
-signal.signal(signal.SIGTERM, sigterm_handler)
 
 def create_rmacs_config():
      # Load the configuration
@@ -217,11 +207,28 @@ def create_rmacs_config():
     
     # Create the default configuration file if it doesn't exist
     create_default_config(config_file_path)
+    
+def update_rmacs_config(new_rmacs_config):
+    config = load_config(config_file_path)
+    # Apply updates to the in-memory configuration
+    for section, updates in new_rmacs_config.items():
+        if section in config:
+            config[section].update(updates)
+            logger.info(f"Applied updates to section '{section}': {updates}")
+        else:
+            logger.warning(f"Unknown configuration section: {section}")
+    # Save the updated configuration to the file
+    try:
+        with open(config_file_path, "w") as config_file:
+            yaml.dump(config, config_file, sort_keys=False)
+            logger.info(f"Configuration saved to {config_file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save configuration to {config_file_path}: {e}")
+
+    
 
 def check_radio_interface(config, primary_radio):
     # Load the configuration
-    #config = load_config(config_file_path)
-    radio_interfaces = config['RMACS_Config']['radio_interfaces'] 
     for interface in radio_interfaces:
         if get_interface_operstate(interface):
             logger.info(f'Radio interface:[{interface}] is up with channel BW : {get_channel_bw(interface)}MHz')
@@ -229,21 +236,37 @@ def check_radio_interface(config, primary_radio):
             if interface == primary_radio:
                 logger.error(f'Primary radio:[{interface}] is not up')
             logger.warning(f'Radio interface:[{interface}] is not up')
+            
+def handle_signal(signal_number, frame):
+    """
+    Signal handler to set the global shutdown flag.
+
+    Args:
+        signal_number (int): The signal number.
+        frame: The current stack frame.
+    """
+    global graceful_shutdown
+    logger.info(f"Received signal {signal_number}, initiating graceful shutdown...")
+    graceful_shutdown = True
+    
 
 def main(): 
     logger.info('RMACS Manager started....')
+    # Register signal handlers
+    signal.signal(signal.SIGINT, handle_signal)
+    signal.signal(signal.SIGTERM, handle_signal)
     # Create the configuration
     create_rmacs_config()
     config = load_config(config_file_path)
     primary_radio = config['RMACS_Config']['primary_radio']
     # Check radio status 
     check_radio_interface(config,primary_radio)
-    #start_rmacs_scripts(config)
+    count = 1
+    start_rmacs_scripts(config)
     
-    #------------- NATS - START---------------
     # Start the RMACS scripts and NATS subscriber
     asyncio.run(run_with_nats(config))
-    #------------- NATS - END---------------
+        
 
 if __name__ == "__main__":
     main()
