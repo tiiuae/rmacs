@@ -63,6 +63,7 @@ async def publish_to_topic(nc, topic, message):
         logger.error(f"Error publishing to topic '{topic}': {e}")
         raise
 
+
 async def subscribe_to_topic(nc, topic, message_handler):
     """
     Subscribe to a NATS topic and set up a message handler.
