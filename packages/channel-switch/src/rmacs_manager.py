@@ -7,6 +7,7 @@ import queue
 from nats.aio.client import Client as NATS
 import time
 import yaml
+import json
 from src.rmacs_server_fsm import main as rmacs_server_main
 from src.rmacs_client_fsm import main as rmacs_client_main
 
@@ -89,7 +90,48 @@ async def handle_NATS_message(topic, payload):
         logger.error(f"Error in handling the '{payload}': {e}")
         raise
         
+async def validate_nats_message(topic, data):
+    """
+    Validate a NATS message based on the topic name and return the parsed config.
 
+    Args:
+        topic (str): The NATS topic name.
+        data (str): The raw data received in the message.
+
+    Returns:
+        tuple: (parsed_config, transactionId) if valid for RMACS_REQ, (None, None) otherwise.
+    """
+    if topic == "comms.settings.RMACS_REQ":
+        try:
+            # Parse the JSON data once
+            message = json.loads(data)
+        except json.JSONDecodeError:
+            logger.error("Failed to parse NATS message data as JSON.")
+            return None, None
+
+        # Common validation: Check for required keys
+        required_keys = {"api_version", "transactionId", "config"}
+        if not required_keys.issubset(message.keys()):
+            logger.error(f"Missing required keys in NATS message: {required_keys - message.keys()}")
+            return None, None
+
+        transaction_id = message.get("transactionId")  # Extract transactionId
+
+        # Validate keys under `channel_switch`
+        config_updates = message.get("config", {}).get("channel_switch", {})
+        valid_keys = {
+            "enabled", "orchestra_node", "radio_interface_to_scan", "traffic_monitoring_interval", "hopping_interval"
+        }
+        for key in config_updates:
+            if key not in valid_keys:
+                logger.error(f"Invalid key in channel_switch: {key}")
+                return None, None
+        
+        return message.get("config"), transaction_id 
+
+    else:
+        logger.error(f"Unknown topic: {topic}")
+        return None, None
 
 async def nats_subscriber(config):
     """
@@ -97,6 +139,7 @@ async def nats_subscriber(config):
     """
     nats_server_url = config['NATS_Config']['nats_server_url']
     rmacs_sub_topic = config['NATS_Config']['rmacs_sub_topic']
+    rmacs_pub_topic = config['NATS_Config']['rmacs_pub_topic']
 
     try:
         # Connect to NATS
@@ -117,7 +160,7 @@ async def nats_subscriber(config):
         await subscribe_to_topic(nc, rmacs_sub_topic, message_handler)
 
         # Publish a test message to rmacs_setting
-        await publish_to_topic(nc, "rmacs_msg", "Current mesh operating frequency")
+        await publish_to_topic(nc, rmacs_pub_topic, "Current mesh operating frequency")
 
         # Keep the connection alive
         while True:
@@ -230,6 +273,8 @@ def update_rmacs_config(new_rmacs_config):
 
 def check_radio_interface(config, primary_radio):
     # Load the configuration
+    #config = load_config(config_file_path)
+    radio_interfaces = config['RMACS_Config']['radio_interfaces'] 
     for interface in radio_interfaces:
         if get_interface_operstate(interface):
             logger.info(f'Radio interface:[{interface}] is up with channel BW : {get_channel_bw(interface)}MHz')
