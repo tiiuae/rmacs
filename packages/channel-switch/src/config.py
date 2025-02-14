@@ -10,6 +10,7 @@ default_config = {
         'osf0': {'group': 'ff13::39', 'port': 12345},
     },
     "RMACS_Config": {
+        "enabled" : True,
         "orchestra_node": True,
         "primary_radio" : "wlp1s0",
         "osf_interface": "osf0",
@@ -58,7 +59,8 @@ default_config = {
     },
     "NATS_Config": {       
     "nats_server_url": "nats://localhost:4222",
-    "topic": "comms.settings.RMACS_REQ"       
+    "rmacs_sub_topic": "comms.settings.RMACS_REQ",     
+    "rmacs_pub_topic": "comms.settings.RMACS_RESP",      
     }
     
 }
