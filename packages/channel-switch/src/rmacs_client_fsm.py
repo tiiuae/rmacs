@@ -459,7 +459,6 @@ class InterferenceDetection(threading.Thread):
         try:
             self.scan.initialize_scan()
             self.scan.execute_scan(freq)
-            #self.channel_quality:list[dict] = self.scan.run_fft_eval(self.scan_freq)
             self.channel_quality:list[dict] = self.scan.run_fft_eval(freq)
         except ValueError as e:
             logger.info(f"ValueError: {e}")

@@ -8,8 +8,8 @@ from nats.aio.client import Client as NATS
 import time
 import yaml
 import json
-from src.rmacs_server_fsm import main as rmacs_server_main
-from src.rmacs_client_fsm import main as rmacs_client_main
+#from src.rmacs_server_fsm import main as rmacs_server_main
+#from src.rmacs_client_fsm import main as rmacs_client_main
 
 
 parent_directory = os.path.abspath(os.path.dirname(__file__))
@@ -226,14 +226,17 @@ def start_rmacs_scripts(config) -> None:
     
     try:
         if config['RMACS_Config']['orchestra_node']:
-            server_thread = threading.Thread(target=rmacs_server_main, args=(nats_msg_queue,))
-            client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
+            #server_thread = threading.Thread(target=rmacs_server_main, args=(nats_msg_queue,))
+            #client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
+            server_thread = threading.Thread(target=start_rmacs_server, args=(config,))
+            client_thread = threading.Thread(target=start_rmacs_client, args=(config,))
             server_thread.start()
             client_thread.start()
             server_thread.join()
             client_thread.join()
         else:
-            client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
+            #client_thread = threading.Thread(target=rmacs_client_main, args=(nats_msg_queue,))
+            client_thread = threading.Thread(target=start_rmacs_client, args=(config,))
             client_thread.start()
             client_thread.join()
             
